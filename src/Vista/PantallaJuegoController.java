@@ -272,6 +272,7 @@ public class PantallaJuegoController {
     	Pinguino pingu = pingus.get(turno);
         Circle pinguCircle = getPinguinCircle(turno);
         
+        pingu.setPosicion(0);
         GridPane.setRowIndex(pinguCircle, 0);
         GridPane.setColumnIndex(pinguCircle, 0);
         
