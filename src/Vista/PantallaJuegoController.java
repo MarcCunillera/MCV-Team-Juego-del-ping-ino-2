@@ -192,7 +192,7 @@ public class PantallaJuegoController {
             if (encontradoA) {
                 eventos.setText(pingu.getID() + " cayó en un agujero 🕳 y retrocedió a la casilla " + agujAnt);
                 pingu.setPosicion(agujAnt);
-                updatePenguinPosition();
+                finalUpdatePosition();
             } else {
                 eventos.setText("El pinguino no se mueve de su posición");
             }
@@ -223,10 +223,12 @@ public class PantallaJuegoController {
     		
     		if(siguienteTrineo > posicion) {
     			pingu.setPosicion(siguienteTrineo);
+    			finalUpdatePosition();
     			eventos.setText("Avanzas al siguiente Treino");
     		} else {
     			eventos.setText("Te encuentras en el último trineo");
     		}
+    		break;
             
             //en caso de caer a la casilla del final
     	case Meta:
@@ -381,7 +383,7 @@ public class PantallaJuegoController {
         }
     }
     
-    //metodo para hacer update de la posicion del pinguino
+    //metodo para hacer update de la posicion del pinguino y comprobar el tipo de casilla
     private void updatePenguinPosition() {
         Pinguino pingu = pingus.get(turno);
         Circle pinguCircle = getPinguinCircle(turno);
@@ -394,6 +396,18 @@ public class PantallaJuegoController {
         
         int posicion = pingu.getPosicion();
         efectoCasilla(posicion);
+    }
+    
+    //update final en caso de caer en trampas
+    private void finalUpdatePosition() {
+    	Pinguino pingu = pingus.get(turno);
+        Circle pinguCircle = getPinguinCircle(turno);
+        
+        int row = pingu.getPosicion() / 5; //5 X 10 grid
+        int col = pingu.getPosicion() % 5;
+        
+        GridPane.setRowIndex(pinguCircle, row);
+        GridPane.setColumnIndex(pinguCircle, col);
     }
 
     @FXML
