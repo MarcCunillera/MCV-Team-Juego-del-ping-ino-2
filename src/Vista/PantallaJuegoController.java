@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import Controlador.*;
 import Modelo.*;
+
 import java.sql.Connection;
 
 import javafx.application.Platform;
@@ -148,7 +149,8 @@ public class PantallaJuegoController {
     	TipoCasilla casilla = tableroCasillas[position]; //almacenar la posicion de la casilla
     	Pinguino pingu = pingus.get(turno);
         Circle pinguCircle = getPinguinCircle(turno);
-    	
+    	int posicion = pingu.getPosicion();
+        
     	switch(casilla) {
     	//caso del oso
     	case Oso:
@@ -190,6 +192,7 @@ public class PantallaJuegoController {
             if (encontradoA) {
                 eventos.setText(pingu.getID() + " cayó en un agujero 🕳 y retrocedió a la casilla " + agujAnt);
                 pingu.setPosicion(agujAnt);
+                updatePenguinPosition();
             } else {
                 eventos.setText("El pinguino no se mueve de su posición");
             }
@@ -216,21 +219,14 @@ public class PantallaJuegoController {
     		break;
     		//Caso trineo
     	case Trineo:
-    		int trinPos = 0;
-            boolean encontradoT = false;
-            for (int i = pingu.getPosicion() + 1; i < tableroCasillas.length && !encontradoT; i++) {
-                if (tableroCasillas[i] == TipoCasilla.Trineo) { //verificar el tipo de casilla
-                    encontradoT = true;
-                    trinPos = i;
-                }
-            }
-            if (encontradoT) {
-                eventos.setText(pingu.getID() + " usó un trineo 🛷 hasta la casilla " + trinPos);
-                pingu.setPosicion(trinPos);
-            } else {
-                eventos.setText(pingu.getNombre() + " encontró un trineo 🛷 roto :(");
-            }
-            break;
+    		int siguienteTrineo = encontrarSiguienteTrineo(posicion);
+    		
+    		if(siguienteTrineo > posicion) {
+    			pingu.setPosicion(siguienteTrineo);
+    			eventos.setText("Avanzas al siguiente Treino");
+    		} else {
+    			eventos.setText("Te encuentras en el último trineo");
+    		}
             
             //en caso de caer a la casilla del final
     	case Meta:
@@ -252,6 +248,21 @@ public class PantallaJuegoController {
     	}
     	//saltar turno al acabar de verificar la casilla
     	siguienteTurno();
+    }
+    //método para encontrar al siguiente trieno
+    private int encontrarSiguienteTrineo(int posActual) {
+        boolean encontradoActual = false;
+
+        for (int i = 0; i < tableroCasillas.length; i++) {
+            if (tableroCasillas[i] == TipoCasilla.Trineo) {
+                if (!encontradoActual && i == posActual) {
+                    encontradoActual = true; // hemos encontrado el trineo actual
+                } else if (encontradoActual) {
+                    return i; // este es el siguiente trineo, nos detenemos aquí
+                }
+            }
+        }
+        return posActual;
     }
     
     //metodo para volver al inicio
