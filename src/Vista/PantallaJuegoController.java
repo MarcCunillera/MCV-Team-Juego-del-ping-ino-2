@@ -68,8 +68,8 @@ public class PantallaJuegoController {
     
     private static final int numCasillas = 50; //cadena constante
     private TipoCasilla[] tableroCasillas = new TipoCasilla[numCasillas]; //generar las casillas
-    private IntegerProperty cantidadPeces = new SimpleIntegerProperty(0);
-    private IntegerProperty cantidadNieve = new SimpleIntegerProperty(0);
+    private IntegerProperty cantidadPeces = new SimpleIntegerProperty();
+    private IntegerProperty cantidadNieve = new SimpleIntegerProperty();
     
     private int turno = 0;
     private ArrayList<Pinguino> pingus = new ArrayList<>();
@@ -121,6 +121,13 @@ public class PantallaJuegoController {
     //método para avanzar turno
     private void siguienteTurno() {
     	turno = (turno + 1) % pingus.size();
+    }
+    
+    //método para actualizar el inventario
+    private void actualizarInventario() {
+    	Pinguino pingu = pingus.get(turno);
+    	cantidadPeces.set(pingu.getPescado());
+    	cantidadNieve.set(pingu.getBolasNieve());
     }
     
     //metodo para colocar las casillas especiales
@@ -381,6 +388,7 @@ public class PantallaJuegoController {
     @FXML
     private void handleDado(ActionEvent event) {
         Pinguino pinguActual = pingus.get(turno);
+        actualizarInventario();
         int resulDado = pinguActual.tirarDadoNormal();
         
         dadoResultText.setText("Ha salido" + resulDado);
@@ -402,7 +410,7 @@ public class PantallaJuegoController {
         System.out.println("Fast.");
         // TODO
         Pinguino pinguActual = pingus.get(turno);
-        
+        actualizarInventario();
         //llamamos al metodo tirar dado rápido
         int resulRapido = pinguActual.tirarDadoRapido();
         
@@ -424,6 +432,7 @@ public class PantallaJuegoController {
         System.out.println("Slow.");
         // TODO
         Pinguino pinguActual = pingus.get(turno);
+        actualizarInventario();
         
         //llamar a la función para tirar dado lento
         int resulLento = pinguActual.tirarDadoLento();
