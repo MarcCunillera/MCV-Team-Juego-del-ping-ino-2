@@ -338,14 +338,14 @@ public class PantallaJuegoController {
     
     @FXML
     private void handleSaveGame() {
-        eventos.setText("Guardando partida...");
+        System.out.println("Guardando partida...");
 
         Task<Void> saveGameTask = new Task<Void>() {
             @Override
             protected Void call() {
                 Connection con = bbdd.conectarBaseDatos();
                 if (con == null) {
-                    Platform.runLater(() -> eventos.setText("Error al conectar con la base de datos."));
+                    eventos.setText("Error al conectar con la base de datos.");
                     return null;
                 }
 
