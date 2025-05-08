@@ -14,6 +14,8 @@ import Modelo.*;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import javafx.application.Platform;
@@ -471,26 +473,9 @@ public class PantallaJuegoController {
                 if (idPartida != -1) {
                     eventos.setText("Partida cargada con ID: " + idPartida);
                     
-                    // Cargar las casillas del tablero
-                    List<Casilla> casillas;
-					try {
-						casillas = bbdd.obtenerCasillasDePartida(con, idPartida);
-					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-                    restaurarTablero(casillas);  // Método para restaurar el tablero
-                    
-                    // Cargar los pingüinos
-                    List<Pinguino> pinguinos;
-					try {
-						pinguinos = bbdd.obtenerPinguinosDePartida(con, idPartida);
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-                    restaurarPinguinos(pinguinos);  // Método para restaurar los pingüinos en el tablero
-
+                    // Restaurar tablero y pingüinos
+                    restaurarTablero();
+                    restaurarPinguinos();
                 } else {
                     eventos.setText("No se encontró la partida con ese número.");
                 }
@@ -501,22 +486,97 @@ public class PantallaJuegoController {
         }
     }
 
-    private void restaurarTablero(List<Casilla> casillas) {
-        // Aquí puedes actualizar las casillas del tablero en tu interfaz gráfica
-        for (Casilla casilla : casillas) {
-            // Actualizar las casillas en la interfaz gráfica según los datos obtenidos
-            // Dependiendo de la implementación de tu tablero, puedes actualizar las casillas de esta forma:
-            // tablero.actualizarCasilla(casilla.getX(), casilla.getY(), casilla.getEstado());
-            System.out.println("Casilla restaurada en: " + casilla.getX() + ", " + casilla.getY());
+
+    public void restaurarTablero() {
+        try {
+            // Recuperar las casillas de la base de datos usando el idPartida
+            String queryCasillas = "SELECT casilla_id, tipo, posicion FROM casillas WHERE id_partida = ?";
+            try (PreparedStatement stmt = con.prepareStatement(queryCasillas)) {
+                stmt.setInt(1, idPartida); // Usamos idPartida para filtrar las casillas
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        int casillaId = rs.getInt("casilla_id");
+                        String tipoCasilla = rs.getString("tipo");
+                        int posicion = rs.getInt("posicion");
+
+                        // Determinar el tipo de casilla
+                        TipoCasilla tipo = TipoCasilla.valueOf(tipoCasilla);
+
+                        // Actualizar la casilla en el tablero
+                        tableroCasillas[posicion] = tipo;
+                    }
+                }
+            }
+            
+            // Si tienes otros recursos como nieve y peces, actualízalos aquí si es necesario.
+            // actualizarRecursos(); // Descomentar si se necesita actualizar los recursos
+
+            eventos.setText("Tablero restaurado exitosamente.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            eventos.setText("Error al restaurar el tablero.");
         }
     }
 
-    private void restaurarPinguinos(List<Pinguino> pingüinos) {
-        // Restaurar la información de los pingüinos en el tablero
-        for (Pinguino pinguino : pingüinos) {
-            // Aquí puedes actualizar los pingüinos en el tablero según su posición y otros atributos
-            // Si tienes un tablero gráfico con elementos representando los pingüinos, los reposicionarías aquí.
-            System.out.println("Pinguino restaurado: " + pinguino.getNombre() + " en posición " + pinguino.getPosX() + ", " + pinguino.getPosY());
+
+    public void restaurarPinguinos() {
+        try {
+            // Recuperar los pingüinos de la base de datos usando el idPartida
+            String queryPinguinos = "SELECT id, nombre, posicion, dado_normal, dado_lento, dado_rapido, bolas_nieve, pescado FROM pinguinos WHERE id_partida = ?";
+            try (PreparedStatement stmt = con.prepareStatement(queryPinguinos)) {
+                stmt.setInt(1, idPartida); // Usamos idPartida para filtrar los pingüinos
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        int id = rs.getInt("id");
+                        String nombre = rs.getString("nombre");
+                        int posicion = rs.getInt("posicion");
+                        int dadoNormal = rs.getInt("dado_normal");
+                        int dadoLento = rs.getInt("dado_lento");
+                        int dadoRapido = rs.getInt("dado_rapido");
+                        int bolasNieve = rs.getInt("bolas_nieve");
+                        int pescado = rs.getInt("pescado");
+
+                        // Crear el pingüino y añadirlo a la lista
+                        new Pinguino(id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado);
+                    }
+                }
+            }
+
+            eventos.setText("Pingüinos restaurados exitosamente.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            eventos.setText("Error al restaurar los pingüinos.");
+        }
+    }
+
+    
+    public void actualizarRecursos() {
+        // Aquí podrías actualizar los recursos del juego, como los peces y la nieve
+        // Si tienes una tabla en la base de datos que guarda la cantidad de estos recursos, 
+        // la consulta podría ser algo como esto:
+
+        String query = "SELECT cantidad_peces, cantidad_nieve FROM recursos WHERE id_partida = ?";
+        
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
+            stmt.setInt(1, idPartida);  // Usamos el idPartida para filtrar los recursos específicos
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int cantidadPecesRecuperados = rs.getInt("cantidad_peces");
+                    int cantidadNieveRecuperada = rs.getInt("cantidad_nieve");
+                    
+                    // Actualizamos las propiedades
+                    cantidadPeces.set(cantidadPecesRecuperados);
+                    cantidadNieve.set(cantidadNieveRecuperada);
+                    
+                    // Si hay algún componente en la UI que depende de estos valores, 
+                    // los puedes actualizar aquí también.
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
