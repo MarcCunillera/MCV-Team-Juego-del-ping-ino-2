@@ -1,5 +1,7 @@
 package Controlador;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.sql.*;
 
@@ -189,4 +191,22 @@ public class bbdd {
         if (rs.next()) return rs.getInt("nextNum");
         return 1;
     }
+    
+    public static List<Integer> obtenerTodasLasIdsDePartidas(Connection con) throws SQLException {
+        List<Integer> ids = new ArrayList<>();
+        String sql = "SELECT id FROM partidas";  // Suponiendo que tienes una tabla llamada 'partidas'
+
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                ids.add(rs.getInt("id"));  // Extrae el ID de cada partida
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e; // Relanzamos la excepción para poder manejarla en la llamada
+        }
+
+        return ids;
+    }
+
 }
