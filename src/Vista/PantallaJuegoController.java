@@ -347,7 +347,9 @@ public class PantallaJuegoController {
                 // Abrir conexión con la base de datos
                 Connection con = bbdd.conectarBaseDatos(); // Abrir conexión con la base de datos
                 if (con == null) {
-                    updateMessage("Error al conectar con la base de datos.");
+                    Platform.runLater(() -> {
+                        eventos.setText("Error al conectar con la base de datos.");
+                    });
                     return null;
                 }
 
@@ -375,9 +377,13 @@ public class PantallaJuegoController {
                     }
 
                     // Confirmación
-                    updateMessage("Partida guardada correctamente.");
+                    Platform.runLater(() -> {
+                        eventos.setText("Partida guardada correctamente.");
+                    });
                 } catch (SQLException e) {
-                    updateMessage("Error al guardar la partida.");
+                    Platform.runLater(() -> {
+                        eventos.setText("Error al guardar la partida.");
+                    });
                     e.printStackTrace();
                 } finally {
                     // Cerrar conexión
@@ -389,7 +395,10 @@ public class PantallaJuegoController {
 
         // Asociamos el cambio de mensaje de progreso a un Label en la interfaz
         saveGameTask.messageProperty().addListener((observable, oldValue, newValue) -> {
-            eventos.setText(newValue); // Actualiza el texto del Label con el estado de la operación
+            // Actualiza el texto del Label con el estado de la operación
+            Platform.runLater(() -> {
+                eventos.setText(newValue);
+            });
         });
 
         // Ejecutamos el Task en un hilo de fondo
@@ -397,6 +406,7 @@ public class PantallaJuegoController {
         thread.setDaemon(true); // El hilo se cerrará cuando se cierre la aplicación
         thread.start();
     }
+
 
 
 
