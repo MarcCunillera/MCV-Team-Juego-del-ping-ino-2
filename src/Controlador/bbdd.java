@@ -1,6 +1,13 @@
 package Controlador;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.Scanner;
 
 public class bbdd {
@@ -99,17 +106,29 @@ public class bbdd {
         return id;
     }
 
-    public static void crearJugador(Connection con, String nombre, String contrasena) {
-        String sql = "INSERT INTO Jugadores (ID_jugador, Nickname, Contrasena, N_partidas) " +
-                     "VALUES (jugadores_seq.NEXTVAL, ?, ?, 0)";
-        try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-            pstmt.setString(1, nombre);
+    public static void crearJugador(Connection conn, String nickname, String contrasena) {
+        PreparedStatement pstmt = null;
+
+        if (contrasena.length() > 8) {
+            System.err.println("Error: La contraseña excede los 8 caracteres permitidos.");
+            return;
+        }
+
+        try {
+            String sql = "INSERT INTO Jugadores (ID_jugador, Nickname, Contrasena, N_partidas) " +
+                         "VALUES (jugadores_seq.NEXTVAL, ?, ?, 0)";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, nickname);
             pstmt.setString(2, contrasena);
             pstmt.executeUpdate();
+            System.out.println("Jugador creado correctamente.");
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error al crear jugador: " + e.getMessage());
+        } finally {
+            try { if (pstmt != null) pstmt.close(); } catch (SQLException e) { /* ignored */ }
         }
     }
+
 
     public static void insertarParticipacion(Connection con, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) throws SQLException {
         String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
@@ -151,60 +170,94 @@ public class bbdd {
         return stmt.executeQuery(sql);
     }
     
-    public static void crearParticipacion(Connection con, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) throws SQLException {
-        String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
-                     "VALUES (PARTICIPACION_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
+    public static void crearParticipacion(Connection conn, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) {
+    	PreparedStatement pstmt = null;
 
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setInt(1, idPartida);  // ID de la partida
-        ps.setInt(2, idJugador);  // ID del jugador
-        ps.setInt(3, posicion);  // Posición del jugador en la partida
-        ps.setInt(4, dadoLento);  // Dado lento del jugador
-        ps.setInt(5, dadoRapido);  // Dado rápido del jugador
-        ps.setInt(6, peces);  // Peces del jugador
-        ps.setInt(7, bolasNieve);  // Bolas de nieve del jugador
-
-        ps.executeUpdate();  // Ejecuta la inserción en la base de datos
-        ps.close();
+    	try {
+    		String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
+    				"VALUES (PARTICIPACION_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
+    		pstmt = conn.prepareStatement(sql);
+    		pstmt.setInt(1, idPartida);
+    		pstmt.setInt(2, idJugador);
+    		pstmt.setInt(3, posicion);
+    		pstmt.setInt(4, dadoLento);
+    		pstmt.setInt(5, dadoRapido);
+    		pstmt.setInt(6, peces);
+    		pstmt.setInt(7, bolasNieve);
+    		pstmt.executeUpdate();
+    		System.out.println("Participación creada correctamente.");
+    	} catch (SQLException e) {
+    		System.err.println("Error al crear participación: " + e.getMessage());
+    	} finally {
+    		try { if (pstmt != null) pstmt.close(); } catch (SQLException e) { /* ignored */ }
+    	}
     }
+
     
     public static int crearNuevaPartida(Connection con) {
         int idPartida = -1;
+        final int numCasillas = 50;
+
         try {
-            // Aquí se crean los valores por defecto para las casillas (puedes ajustarlo según tu juego)
-            String[] casillas = new String[50]; 
-            for (int i = 0; i < casillas.length; i++) {
-                casillas[i] = "Casilla_" + (i + 1); // Ajusta esto según tu lógica de casillas
+            String[] casillas = new String[numCasillas];
+
+            // Inicializamos con tipo Normal por defecto
+            Arrays.fill(casillas, "Normal");
+
+            // Posiciones especiales
+            casillas[0] = "Normal"; // INICIO
+            casillas[numCasillas - 1] = "Meta"; // META
+
+            // Definimos los límites de cada tipo especial
+            Map<String, Integer> limites = new HashMap<>();
+            limites.put("Agujero", 4);
+            limites.put("Oso", 3);
+            limites.put("Interrogante", 7);
+            limites.put("Trineo", 4);
+
+            List<Integer> posiciones = new ArrayList<>();
+            for (int i = 1; i < numCasillas - 1; i++) {
+                posiciones.add(i); // Posiciones del 2 al 49 (índices 1 a 48)
             }
 
-            // Insertar la nueva partida en la tabla Partidas
-            String sql = "INSERT INTO Partidas " +
-                         "(ID_Partida, Num_Partida, Estado, Hora, Data, " +
-                         "ID_Casilla_1, ID_Casilla_2, ID_Casilla_3, ID_Casilla_4, ID_Casilla_5, " +
-                         "ID_Casilla_6, ID_Casilla_7, ID_Casilla_8, ID_Casilla_9, ID_Casilla_10, " +
-                         "ID_Casilla_11, ID_Casilla_12, ID_Casilla_13, ID_Casilla_14, ID_Casilla_15, " +
-                         "ID_Casilla_16, ID_Casilla_17, ID_Casilla_18, ID_Casilla_19, ID_Casilla_20, " +
-                         "ID_Casilla_21, ID_Casilla_22, ID_Casilla_23, ID_Casilla_24, ID_Casilla_25, " +
-                         "ID_Casilla_26, ID_Casilla_27, ID_Casilla_28, ID_Casilla_29, ID_Casilla_30, " +
-                         "ID_Casilla_31, ID_Casilla_32, ID_Casilla_33, ID_Casilla_34, ID_Casilla_35, " +
-                         "ID_Casilla_36, ID_Casilla_37, ID_Casilla_38, ID_Casilla_39, ID_Casilla_40, " +
-                         "ID_Casilla_41, ID_Casilla_42, ID_Casilla_43, ID_Casilla_44, ID_Casilla_45, " +
-                         "ID_Casilla_46, ID_Casilla_47, ID_Casilla_48, ID_Casilla_49, ID_Casilla_50) " +
-                         "VALUES (partidas_seq.NEXTVAL, partidas_seq.CURRVAL, 'EN_CURSO', CURRENT_TIMESTAMP, CURRENT_DATE, " +
-                         "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            Collections.shuffle(posiciones); // Aleatorizamos las posiciones
 
-            // Crear una preparación de la sentencia SQL para insertar las casillas
-            PreparedStatement ps = con.prepareStatement(sql);
-            // Establecemos las casillas como parámetros en el PreparedStatement
-            for (int i = 0; i < casillas.length; i++) {
-                ps.setString(i + 6, casillas[i]); // +6 porque los primeros 5 parámetros son ID_Partida, Num_Partida, Estado, Hora, Data
+            Random rand = new Random();
+            int index = 0;
+
+            // Asignar los tipos limitados
+            for (Map.Entry<String, Integer> entry : limites.entrySet()) {
+                String tipo = entry.getKey();
+                int cantidad = entry.getValue();
+                for (int i = 0; i < cantidad; i++) {
+                    casillas[posiciones.get(index++)] = tipo;
+                }
             }
 
-            // Ejecutamos la sentencia SQL para insertar la nueva partida
+            // Armamos la sentencia SQL
+            StringBuilder sql = new StringBuilder("INSERT INTO Partidas " +
+                "(ID_Partida, Num_Partida, Estado, Hora, Data");
+
+            for (int i = 1; i <= numCasillas; i++) {
+                sql.append(", ID_Casilla_").append(i);
+            }
+            sql.append(") VALUES (partidas_seq.NEXTVAL, partidas_seq.CURRVAL, 'EN_CURSO', CURRENT_TIMESTAMP, CURRENT_DATE");
+
+            for (int i = 0; i < numCasillas; i++) {
+                sql.append(", ?");
+            }
+            sql.append(")");
+
+            PreparedStatement ps = con.prepareStatement(sql.toString());
+
+            for (int i = 0; i < numCasillas; i++) {
+                ps.setString(i + 1, casillas[i]);
+            }
+
             ps.executeUpdate();
             ps.close();
 
-            // Obtener el ID de la nueva partida creada
+            // Recuperar el ID de la partida
             ResultSet rs = select(con, "SELECT MAX(ID_Partida) AS ID FROM Partidas");
             if (rs.next()) {
                 idPartida = rs.getInt("ID");
@@ -216,6 +269,7 @@ public class bbdd {
 
         return idPartida;
     }
+
 
     public static int obtenerIdPartida(Connection con, int numPartida) {
         int idPartida = -1;
