@@ -121,10 +121,10 @@ public class PantallaJuegoController {
         nieve_t.textProperty().bind(Bindings.concat("Bolas de nieve: ", cantidadNieve.asString()));
         //añadir la lista de pinguinos
         //pingus = Pinguino.getListaPinguinos();
-        pingus.add(new Pinguino(1, "Pinguino 1", 0, 0, 0, 0, 0, 0));
-        pingus.add(new Pinguino(2, "Pinguino 1", 0, 0, 0, 0, 0, 0));
-        pingus.add(new Pinguino(3, "Pinguino 1", 0, 0, 0, 0, 0, 0));
-        pingus.add(new Pinguino(4, "Pinguino 1", 0, 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(1, "Toñin", 0, 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(2, "Juan", 0, 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(3, "Ruperto", 0, 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(4, "Alfred", 0, 0, 0, 0, 0, 0));
         
         iniciarTablero();
     }
@@ -335,7 +335,7 @@ public class PantallaJuegoController {
             eventos.setText("Error al crear nueva partida.");
         }
     }
-
+    
     @FXML
     private void handleSaveGame() {
         System.out.println("Guardando partida...");
@@ -393,23 +393,11 @@ public class PantallaJuegoController {
             }
         };
 
-        // Asociamos el cambio de mensaje de progreso a un Label en la interfaz
-        saveGameTask.messageProperty().addListener((observable, oldValue, newValue) -> {
-            // Actualiza el texto del Label con el estado de la operación
-            Platform.runLater(() -> {
-                eventos.setText(newValue);
-            });
-        });
-
         // Ejecutamos el Task en un hilo de fondo
         Thread thread = new Thread(saveGameTask);
         thread.setDaemon(true); // El hilo se cerrará cuando se cierre la aplicación
         thread.start();
     }
-
-
-
-
 
     @FXML
     private void handleLoadGame() {
