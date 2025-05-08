@@ -118,6 +118,11 @@ public class PantallaJuegoController {
     	mostrarImagenesTrineo();
     }
     
+    //método para avanzar turno
+    private void siguienteTurno() {
+    	turno = (turno + 1) % pingus.size();
+    }
+    
     //metodo para colocar las casillas especiales
     private void colocarCasillasEspeciales(TipoCasilla tipo, int cantidad) {
     	for (int i = 0; i < cantidad; i++) {
@@ -170,7 +175,7 @@ public class PantallaJuegoController {
     		int agujAnt = 0;
             boolean encontradoA = false;
             for (int i = pingu.getPosicion() - 1; i >= 0 && !encontradoA; i--) {
-                if (tableroCasillas[i] == TipoCasilla.Agujero) { //si el tipo de casilla es agujero //revisar
+                if (tableroCasillas[i] == TipoCasilla.Agujero) { //si el tipo de casilla es agujero
                     encontradoA = true;
                     agujAnt = i;
                 }
@@ -207,7 +212,7 @@ public class PantallaJuegoController {
     		int trinPos = 0;
             boolean encontradoT = false;
             for (int i = pingu.getPosicion() + 1; i < tableroCasillas.length && !encontradoT; i++) {
-                if (tableroCasillas[i] == TipoCasilla.Trineo) { //revisar
+                if (tableroCasillas[i] == TipoCasilla.Trineo) { //verificar el tipo de casilla
                     encontradoT = true;
                     trinPos = i;
                 }
@@ -231,6 +236,8 @@ public class PantallaJuegoController {
     		eventos.setText("Casilla normal, todo tranquilo");
     		break;
     	}
+    	//saltar turno al acabar de verificar la casilla
+    	siguienteTurno();
     }
     
     //metodo para volver al inicio
@@ -242,8 +249,6 @@ public class PantallaJuegoController {
         GridPane.setColumnIndex(pinguCircle, 0);
         
         eventos.setText("Un oso te ha atrapado y vuelves al inicio :(");
-        
-        turno = (turno + 1) % pingus.size(); //Asegura que el turno vaya de uno en uno
     }
 
     // Button and menu actions
@@ -364,8 +369,6 @@ public class PantallaJuegoController {
         
         int posicion = pingu.getPosicion();
         efectoCasilla(posicion);
-        
-        turno = (turno + 1) % pingus.size(); //Asegura que el turno vaya de uno en uno
     }
 
     @FXML
@@ -425,12 +428,13 @@ public class PantallaJuegoController {
         eventos.setText("Resultado dado Lento" + resulLento);
         
         //mover al pinguino
-      //mover el pinguino
+        //mover el pinguino
         if((pinguActual.getPosicion() + resulLento) > 49) { //si la posicion a cambiar es superior al limite del tablero
         	pinguActual.setPosicion(49);
         } else {
         	pinguActual.setPosicion(pinguActual.getPosicion() + resulLento);
         }
+        updatePenguinPosition();
     }
 
     @FXML
