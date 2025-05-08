@@ -372,10 +372,12 @@ public class PantallaJuegoController {
         SwingWorker<Void, String> worker = new SwingWorker<Void, String>() {
             @Override
             protected Void doInBackground() {
+                boolean exito = false;  // Variable para controlar el éxito del proceso
+
                 try {
                     // Crear la partida en la base de datos
                     int idPartida = bbdd.crearNuevaPartida(con);
-                    publish("Nueva partida creada con ID: " + idPartida);
+                    eventos.setText("Nueva partida creada con ID: " + idPartida);
 
                     // Guardamos el estado de las casillas (tablero de juego)
                     Integer[] casillas = obtenerEstadoCasillas();
@@ -389,46 +391,47 @@ public class PantallaJuegoController {
                             bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd"); // Usar mejor contraseña en producción
                             idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
                         }
-                        
+
                         // Crear la participación del jugador en la partida
                         bbdd.crearParticipacion(con, idPartida, idJugador, pingu.getPosicion(),
                                                  pingu.getDadoLento(), pingu.getDadoRapido(),
                                                  pingu.getPescado(), pingu.getBolasNieve());
-                        publish("Participación del jugador " + pingu.getNombre() + " guardada.");
+                        eventos.setText("Participación del jugador " + pingu.getNombre() + " guardada.");
                     }
 
-                    publish("Juego guardado exitosamente.");
+                    // Si todo se guarda correctamente, marcamos el éxito
+                    exito = true;
+                    eventos.setText("Juego guardado exitosamente.");
                 } catch (Exception e) {
                     e.printStackTrace();
-                    publish("Error al guardar el juego.");
+                    eventos.setText("Error al guardar el juego.");
                 }
+
+                // Llamamos a done después de que la tarea termine para manejar el estado final
+                if (!exito) {
+                    publish("Ocurrió un problema durante el proceso de guardado.");
+                }
+                
                 return null;
             }
 
-            @Override
-            protected void process(List<String> chunks) {
-                // Acumula los mensajes y los actualiza en el Text
-                StringBuilder message = new StringBuilder();
-                for (String msg : chunks) {
-                    message.append(msg).append("\n");
-                }
-                eventos.setText(message.toString()); // Actualiza el texto del objeto Text
-            }
-
+            // Este método se ejecuta cuando la tarea termina (independientemente de si tuvo éxito o no)
             @Override
             protected void done() {
-                // Al finalizar, actualizamos la UI para reflejar el éxito
                 try {
-                    get(); // Para lanzar una excepción si hay algún error
+                    // Aquí podemos verificar si se completó correctamente
+                    get();  // Lanzará una excepción si la tarea falló
                 } catch (Exception e) {
-                    eventos.setText("Error al guardar el juego: " + e.getMessage() + "\n");
+                    // Si hubo un error, mostramos el mensaje de error en la UI
+                    eventos.setText("Error final al guardar el juego.");
                 }
             }
         };
 
-        // Inicia el trabajo en segundo plano
+        // Iniciamos la tarea en el hilo de fondo
         worker.execute();
     }
+
 
     // Método para obtener el estado de las casillas (tablero)
     private Integer[] obtenerEstadoCasillas() {
