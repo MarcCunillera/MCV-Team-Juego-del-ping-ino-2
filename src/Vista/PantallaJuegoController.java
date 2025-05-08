@@ -387,11 +387,6 @@ public class PantallaJuegoController {
         
         //Actualizar el tablero de forma visual
         updatePenguinPosition();
-        int nuevaPosicion = pinguActual.getPosicion();
-        
-        if (nuevaPosicion >= 49) {
-            eventos.setText("¡El pingüino " + pinguActual.getNombre() + " ha ganado!");
-        }
         
     }
 
