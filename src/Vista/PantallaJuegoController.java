@@ -8,6 +8,7 @@ import java.util.Optional;
 import Controlador.*;
 import Modelo.*;
 import java.sql.Connection;
+import java.sql.SQLException;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -250,7 +251,7 @@ public class PantallaJuegoController {
 
     @FXML
     private void handleNewGame() {
-        System.out.println("New game.");
+        System.out.println("Nueva Partida.");
         try {
             // Crea nueva partida
             idPartida = bbdd.crearNuevaPartida(con);
@@ -274,25 +275,40 @@ public class PantallaJuegoController {
 
     @FXML
     private void handleSaveGame() {
-        System.out.println("Saved game.");
+        System.out.println("Guardando Partida.");
 
-        Connection con = bbdd.conectarBaseDatos(); // <= IMPORTANTE: abrir conexión
+        Connection con = bbdd.conectarBaseDatos();
         if (con == null) {
             eventos.setText("Error al conectar con la base de datos.");
             return;
         }
 
-        for (Pinguino pingu : pingus) {
-            bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion());
+        try {
+            for (Pinguino pingu : pingus) {
+                if (pingu == null) {
+                    System.err.println("¡Pinguino nulo detectado!");
+                    continue;
+                }
+
+                bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion());
+            }
+
+            eventos.setText("Partida guardada correctamente.");
+        } catch (Exception e) {
+            eventos.setText("Error al guardar la partida.");
+            e.printStackTrace(); // muestra en consola detalles del error
+        } finally {
+            try {
+                con.close(); // asegúrate de cerrar la conexión
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-
-        eventos.setText("Partida guardada correctamente.");
     }
-
 
     @FXML
     private void handleLoadGame() {
-        System.out.println("Loaded game.");
+        System.out.println("Cargar Partida.");
         int numeroPartida = obtenerNumeroPartidaDesdeInput();
 
         if (numeroPartida != -1) {
