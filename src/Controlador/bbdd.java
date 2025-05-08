@@ -1,253 +1,192 @@
 package Controlador;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.sql.*;
 
 public class bbdd {
-    private static final Logger logger = Logger.getLogger(BBDD.class.getName());
-    
-    public static Connection conectarBaseDatos() {
-        Connection con = null;
-        Scanner scan = new Scanner(System.in);
+	
+	public static Connection conectarBaseDatos() {
+	    Connection con = null;
+	    Scanner scan = new Scanner(System.in);
 
-        try {
-            System.out.println("Intentando conectarse a la base de datos");
-            System.out.println("Selecciona centro o fuera de centro: (CENTRO/FUERA)");
-            String s = scan.nextLine().toLowerCase();
+	    System.out.println("Intentando conectarse a la base de datos");
+	    System.out.println("Selecciona centro o fuera de centro: (CENTRO/FUERA)");
+	    String s = scan.nextLine().toLowerCase();
 
-            String URL = s.equals("centro")
-                ? "jdbc:oracle:thin:@192.168.3.26:1521/XEPDB2"
-                : "jdbc:oracle:thin:@oracle.ilerna.com:1521/XEPDB2";
+	    String URL = s.equals("centro")
+	        ? "jdbc:oracle:thin:@192.168.3.26:1521/XEPDB2"
+	        : "jdbc:oracle:thin:@oracle.ilerna.com:1521/XEPDB2";
 
-            // Credenciales hardcodeadas (considera usar configuración externa)
-            String USER = "DW2425_PIN_GRUP07";
-            String PWD = "ACMV007";
+	    while (con == null) {
+	        //System.out.println("¿Usuario?");
+	        //String USER = scan.nextLine();
+	        String USER = "DW2425_PIN_GRUP07";
+	        //System.out.println("¿Contraseña?");
+	        //String PWD = scan.nextLine();
+	        String PWD = "ACMV007";
+	        try {
+	            Class.forName("oracle.jdbc.driver.OracleDriver");
+	            con = DriverManager.getConnection(URL, USER, PWD);
+	        } catch (SQLException e) {
+	            System.out.println("Usuario o contraseña incorrectos. Inténtalo de nuevo.");
+	        } catch (ClassNotFoundException e) {
+	            System.out.println("Error al cargar el driver JDBC.");
+	            break;
+	        }
+	    }
 
-            Class.forName("oracle.jdbc.driver.OracleDriver");
-            con = DriverManager.getConnection(URL, USER, PWD);
-            
-            if (con != null) {
-                System.out.println("Conectado a la base de datos.");
-            }
-        } catch (ClassNotFoundException e) {
-            logger.log(Level.SEVERE, "Error al cargar el driver JDBC", e);
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error de conexión a la base de datos", e);
-        }
+	    if (con != null) {
+	        System.out.println("Conectado a la base de datos.");
+	    }
 
-        return con;
-    }
+	    return con;
+	}
 
     public static void cerrarConexion(Connection con) {
-        if (con != null) {
-            try {
-                if (!con.isClosed()) {
-                    con.close();
-                    System.out.println("Conexión cerrada correctamente.");
-                }
-            } catch (SQLException e) {
-                logger.log(Level.SEVERE, "Error al cerrar la conexión", e);
+        try {
+            if (con != null && !con.isClosed()) {
+                con.close();
+                System.out.println("Conexión cerrada correctamente.");
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    public static int crearNuevaPartida(Connection con) throws SQLException {
-        if (con == null) {
-            throw new IllegalArgumentException("La conexión no puede ser nula");
-        }
-
+    public static int crearNuevaPartida(Connection con) {
         int idPartida = -1;
-        boolean autoCommit = con.getAutoCommit();
-        
         try {
-            con.setAutoCommit(false);
-            
-            // Usamos PreparedStatement para evitar inyección SQL
+            // Agregamos un estado por defecto ("EN_CURSO") y null para los campos adicionales
             String sql = "INSERT INTO Partidas " +
                          "(ID_Partida, Num_Partida, Estado, Hora, Data, ID_Casilla, Nom_Casilla) " +
                          "VALUES (partidas_seq.NEXTVAL, partidas_seq.CURRVAL, 'EN_CURSO', CURRENT_TIMESTAMP, CURRENT_DATE, NULL, NULL)";
-            
-            try (PreparedStatement pstmt = con.prepareStatement(sql, new String[]{"ID_Partida"})) {
-                pstmt.executeUpdate();
-                
-                try (ResultSet rs = pstmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        idPartida = rs.getInt(1);
-                    }
-                }
+            insert(con, sql);
+
+            ResultSet rs = select(con, "SELECT MAX(ID_Partida) AS ID FROM Partidas");
+            if (rs.next()) {
+                idPartida = rs.getInt("ID");
             }
-            
-            con.commit();
         } catch (SQLException e) {
-            con.rollback();
-            logger.log(Level.SEVERE, "Error al crear nueva partida", e);
-            throw e;
-        } finally {
-            con.setAutoCommit(autoCommit);
+            e.printStackTrace();
         }
-        
         return idPartida;
     }
 
-    public static boolean crearJugador(Connection con, String nombre, String contrasena) throws SQLException {
-        if (con == null || nombre == null || contrasena == null) {
-            throw new IllegalArgumentException("Parámetros no pueden ser nulos");
-        }
 
+    public static void crearJugador(Connection con, String nombre, String contrasena) {
         String sql = "INSERT INTO Jugadores (ID_jugador, Nickname, Contrasena, N_partidas) " +
                      "VALUES (jugadores_seq.NEXTVAL, ?, ?, 0)";
-        
         try (PreparedStatement pstmt = con.prepareStatement(sql)) {
             pstmt.setString(1, nombre);
             pstmt.setString(2, contrasena);
-            return pstmt.executeUpdate() > 0;
-        }
-    }
-
-    public static int obtenerIdJugador(Connection con, String nombre) throws SQLException {
-        if (con == null || nombre == null) {
-            throw new IllegalArgumentException("Parámetros no pueden ser nulos");
-        }
-
-        String sql = "SELECT ID_jugador FROM Jugadores WHERE Nickname = ?";
-        
-        try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-            pstmt.setString(1, nombre);
-            
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() ? rs.getInt("ID_jugador") : -1;
-            }
-        }
-    }
-
-    public static boolean crearParticipacion(Connection con, int idPartida, int idJugador) throws SQLException {
-        if (con == null || idPartida <= 0 || idJugador <= 0) {
-            throw new IllegalArgumentException("Parámetros inválidos");
-        }
-
-        String sql = "INSERT INTO Participaciones " +
-                     "(ID_Participacion, ID_Partida, ID_jugador, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
-                     "VALUES (participaciones_seq.NEXTVAL, ?, ?, 0, 0, 0, 0)";
-        
-        try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-            pstmt.setInt(1, idPartida);
-            pstmt.setInt(2, idJugador);
-            return pstmt.executeUpdate() > 0;
-        }
-    }
-
-    public static int obtenerIdPartida(Connection con, int numPartida) throws SQLException {
-        if (con == null || numPartida <= 0) {
-            throw new IllegalArgumentException("Parámetros inválidos");
-        }
-
-        String sql = "SELECT ID_Partida FROM Partidas WHERE Num_Partida = ?";
-        
-        try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-            pstmt.setInt(1, numPartida);
-            
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() ? rs.getInt("ID_Partida") : -1;
-            }
-        }
-    }
-
-    public static boolean actualizarParticipacion(Connection con, int idPartida, String nombre, int nuevaPosicion) throws SQLException {
-        if (con == null || nombre == null || idPartida <= 0) {
-            throw new IllegalArgumentException("Parámetros inválidos");
-        }
-
-        int idJugador = obtenerIdJugador(con, nombre);
-        if (idJugador == -1) {
-            return false;
-        }
-
-        String sql = "UPDATE Participaciones SET Jugador_Pos = ? " +
-                     "WHERE ID_Partida = ? AND ID_jugador = ?";
-        
-        try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-            pstmt.setInt(1, nuevaPosicion);
-            pstmt.setInt(2, idPartida);
-            pstmt.setInt(3, idJugador);
-            return pstmt.executeUpdate() > 0;
-        }
-    }
-
-    // Métodos mejorados para guardar el estado del juego
-    public static int guardarEstadoJuego(Connection con, String estado, List<Integer> idCasillas, 
-                                       List<JugadorEstado> jugadores) throws SQLException {
-        if (con == null || estado == null || idCasillas == null || jugadores == null) {
-            throw new IllegalArgumentException("Parámetros no pueden ser nulos");
-        }
-
-        boolean autoCommit = con.getAutoCommit();
-        int idPartida = -1;
-        
-        try {
-            con.setAutoCommit(false);
-            
-            // Crear nueva partida
-            idPartida = crearNuevaPartida(con);
-            if (idPartida == -1) {
-                throw new SQLException("No se pudo crear la partida");
-            }
-
-            // Guardar estado de los jugadores
-            for (JugadorEstado jugador : jugadores) {
-                int idJugador = obtenerIdJugador(con, jugador.getNombre());
-                if (idJugador == -1) {
-                    crearJugador(con, jugador.getNombre(), "tempPassword");
-                    idJugador = obtenerIdJugador(con, jugador.getNombre());
-                }
-
-                crearParticipacion(con, idPartida, idJugador);
-                actualizarEstadoJugador(con, idPartida, idJugador, jugador);
-            }
-            
-            con.commit();
+            pstmt.executeUpdate();
         } catch (SQLException e) {
-            con.rollback();
-            logger.log(Level.SEVERE, "Error al guardar estado del juego", e);
-            throw e;
-        } finally {
-            con.setAutoCommit(autoCommit);
-        }
-        
-        return idPartida;
-    }
-
-    private static boolean actualizarEstadoJugador(Connection con, int idPartida, int idJugador, 
-                                                 JugadorEstado jugador) throws SQLException {
-        String sql = "UPDATE Participaciones SET " +
-                     "Jugador_Pos = ?, Dado_Lento = ?, Dado_Rapido = ?, Peces = ?, Bolas_Nieve = ? " +
-                     "WHERE ID_Partida = ? AND ID_jugador = ?";
-        
-        try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-            pstmt.setInt(1, jugador.getPosicion());
-            pstmt.setInt(2, jugador.getDadoLento());
-            pstmt.setInt(3, jugador.getDadoRapido());
-            pstmt.setInt(4, jugador.getPeces());
-            pstmt.setInt(5, jugador.getBolasNieve());
-            pstmt.setInt(6, idPartida);
-            pstmt.setInt(7, idJugador);
-            return pstmt.executeUpdate() > 0;
+            e.printStackTrace();
         }
     }
 
-    // Clase auxiliar para representar el estado de un jugador
-    public static class JugadorEstado {
-        private String nombre;
-        private int posicion;
-        private int dadoLento;
-        private int dadoRapido;
-        private int peces;
-        private int bolasNieve;
+    public static int obtenerIdJugador(Connection con, String nombre) {
+        int id = -1;
+        try {
+            ResultSet rs = select(con, "SELECT ID_jugador FROM Jugadores WHERE Nickname = '" + nombre + "'");
+            if (rs.next()) {
+                id = rs.getInt("ID_jugador");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return id;
+    }
 
-        // Constructor, getters y setters
-        // ...
+    public static void crearParticipacion(Connection con, int idPartida, int idJugador) {
+    	String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_jugador, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
+    	             "VALUES (participaciones_seq.NEXTVAL, " + idPartida + ", " + idJugador + ", 0, 0, 0, 0)";
+
+        insert(con, sql);
+    }
+
+    public static int obtenerIdPartida(Connection con, int numPartida) {
+        int id = -1;
+        try {
+            ResultSet rs = select(con, "SELECT ID_Partida FROM Partidas WHERE Num_Partida = " + numPartida);
+            if (rs.next()) {
+                id = rs.getInt("ID_Partida");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return id;
+    }
+
+    public static void actualizarParticipacion(Connection con, int idPartida, String nombre, int nuevaPosicion) {
+        int idJugador = obtenerIdJugador(con, nombre);
+        if (idJugador != -1) {
+            String sql = "UPDATE Participaciones SET Peces = " + nuevaPosicion +
+                         " WHERE ID_Partida = " + idPartida + " AND ID_jugador = " + idJugador;
+            update(con, sql);
+        }
+    }
+
+    // 👇 Asegúrate de que estas funciones están implementadas en tu clase (o añádelas si no están):
+    public static void insert(Connection con, String sql) {
+        try (Statement stmt = con.createStatement()) {
+            stmt.executeUpdate(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void update(Connection con, String sql) {
+        insert(con, sql); // misma implementación que insert
+    }
+
+    public static ResultSet select(Connection con, String sql) throws SQLException {
+        Statement stmt = con.createStatement();
+        return stmt.executeQuery(sql);
+    }
+    
+    
+    //metodos para guardar tablero y jugadores (mrc)
+    public static int insertarPartida(Connection con, String estado, Integer[] idCasillas) throws SQLException {
+        String sql = "INSERT INTO Partidas (ID_Partida, Num_Partida, Estado, Hora, Data, ID_Casilla) " +
+                     "VALUES (seq_partida.NEXTVAL, ?, ?, SYSTIMESTAMP, SYSDATE, ?)";
+
+        Array array = con.createArrayOf("NUMBER", idCasillas); // Oracle específico: usa STRUCT/ARRAY si es VARRAY
+        PreparedStatement ps = con.prepareStatement(sql, new String[]{"ID_Partida"});
+        ps.setInt(1, generarNumeroPartida(con));
+        ps.setString(2, estado);
+        ps.setArray(3, array); // Oracle puede requerir tipo específico (ver nota abajo)
+        ps.executeUpdate();
+
+        ResultSet rs = ps.getGeneratedKeys();
+        if (rs.next()) {
+            return rs.getInt(1);
+        } else {
+            throw new SQLException("No se pudo generar ID_Partida");
+        }
+    }
+
+    public static void insertarParticipacion(Connection con, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) throws SQLException {
+        String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
+                     "VALUES (seq_participacion.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
+
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setInt(1, idPartida);
+        ps.setInt(2, idJugador);
+        ps.setInt(3, posicion);
+        ps.setInt(4, dadoLento);
+        ps.setInt(5, dadoRapido);
+        ps.setInt(6, peces);
+        ps.setInt(7, bolasNieve);
+        ps.executeUpdate();
+    }
+
+    public static int generarNumeroPartida(Connection con) throws SQLException {
+        // Método simple para contar partidas actuales + 1
+        String sql = "SELECT NVL(MAX(Num_Partida), 0) + 1 AS nextNum FROM Partidas";
+        Statement stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery(sql);
+        if (rs.next()) return rs.getInt("nextNum");
+        return 1;
     }
 }

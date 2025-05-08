@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import Controlador.*;
 import Modelo.*;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -15,6 +16,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -70,8 +72,36 @@ public class PantallaJuegoController {
     
     private static final int numCasillas = 50; //cadena constante
     private TipoCasilla[] tableroCasillas = new TipoCasilla[numCasillas]; //generar las casillas
-    private IntegerProperty cantidadPeces = new SimpleIntegerProperty(0);
-    private IntegerProperty cantidadNieve = new SimpleIntegerProperty(0);
+    private IntegerProperty cantidadPeces = new SimpleIntegerProperty();
+    private IntegerProperty cantidadNieve = new SimpleIntegerProperty();
+    
+    //metodo para tomar el id de casilla
+    public Integer[] getCasillasId() {
+        Integer[] ids = new Integer[tableroCasillas.length];
+        
+        // Recorremos el tablero y agregamos el índice de cada casilla
+        for (int i = 0; i < tableroCasillas.length; i++) {
+            // Dependiendo del tipo de casilla, agregamos su índice como ID
+            // Si necesitas filtrar ciertos tipos, puedes hacerlo aquí
+            if (tableroCasillas[i] != TipoCasilla.Normal) {
+                ids[i] = i; // Usamos el índice como ID
+            } else {
+                ids[i] = null; // Si es "Normal" dejamos el valor como null (opcional)
+            }
+        }
+        
+        // Filtrar valores null (si es necesario)
+        // Este paso es opcional si no deseas tener valores nulos en el array final
+        List<Integer> idList = new ArrayList<>();
+        for (Integer id : ids) {
+            if (id != null) {
+                idList.add(id);
+            }
+        }
+        
+        return idList.toArray(new Integer[0]); // Convertimos de vuelta a un array de Integer
+    }
+
     
     private int turno = 0;
     private ArrayList<Pinguino> pingus = new ArrayList<>();
@@ -120,6 +150,18 @@ public class PantallaJuegoController {
     	mostrarImagenesTrineo();
     }
     
+    //método para avanzar turno
+    private void siguienteTurno() {
+    	turno = (turno + 1) % pingus.size();
+    }
+    
+    //método para actualizar el inventario
+    private void actualizarInventario() {
+    	Pinguino pingu = pingus.get(turno);
+    	cantidadPeces.set(pingu.getPescado());
+    	cantidadNieve.set(pingu.getBolasNieve());
+    }
+    
     //metodo para colocar las casillas especiales
     private void colocarCasillasEspeciales(TipoCasilla tipo, int cantidad) {
     	for (int i = 0; i < cantidad; i++) {
@@ -138,7 +180,8 @@ public class PantallaJuegoController {
     	TipoCasilla casilla = tableroCasillas[position]; //almacenar la posicion de la casilla
     	Pinguino pingu = pingus.get(turno);
         Circle pinguCircle = getPinguinCircle(turno);
-    	
+    	int posicion = pingu.getPosicion();
+        
     	switch(casilla) {
     	//caso del oso
     	case Oso:
@@ -172,7 +215,7 @@ public class PantallaJuegoController {
     		int agujAnt = 0;
             boolean encontradoA = false;
             for (int i = pingu.getPosicion() - 1; i >= 0 && !encontradoA; i--) {
-                if (tableroCasillas[i] == TipoCasilla.Agujero) { //si el tipo de casilla es agujero //revisar
+                if (tableroCasillas[i] == TipoCasilla.Agujero) { //si el tipo de casilla es agujero
                     encontradoA = true;
                     agujAnt = i;
                 }
@@ -180,6 +223,7 @@ public class PantallaJuegoController {
             if (encontradoA) {
                 eventos.setText(pingu.getID() + " cayó en un agujero 🕳 y retrocedió a la casilla " + agujAnt);
                 pingu.setPosicion(agujAnt);
+                finalUpdatePosition();
             } else {
                 eventos.setText("El pinguino no se mueve de su posición");
             }
@@ -206,21 +250,16 @@ public class PantallaJuegoController {
     		break;
     		//Caso trineo
     	case Trineo:
-    		int trinPos = 0;
-            boolean encontradoT = false;
-            for (int i = pingu.getPosicion() + 1; i < tableroCasillas.length && !encontradoT; i++) {
-                if (tableroCasillas[i] == TipoCasilla.Trineo) { //revisar
-                    encontradoT = true;
-                    trinPos = i;
-                }
-            }
-            if (encontradoT) {
-                eventos.setText(pingu.getID() + " usó un trineo 🛷 hasta la casilla " + trinPos);
-                pingu.setPosicion(trinPos);
-            } else {
-                eventos.setText(pingu.getNombre() + " encontró un trineo 🛷 roto :(");
-            }
-            break;
+    		int siguienteTrineo = encontrarSiguienteTrineo(posicion);
+    		
+    		if(siguienteTrineo > posicion) {
+    			pingu.setPosicion(siguienteTrineo);
+    			finalUpdatePosition();
+    			eventos.setText("Avanzas al siguiente Treino");
+    		} else {
+    			eventos.setText("Te encuentras en el último trineo");
+    		}
+    		break;
             
             //en caso de caer a la casilla del final
     	case Meta:
@@ -228,11 +267,35 @@ public class PantallaJuegoController {
     		alert.setTitle("El pinguino: " + pingu.getID() + " ha llegado a la meta!!");
     		alert.setHeaderText("El juego termina");
     		alert.showAndWait();
+    		
+    		//deshabilitar botones
+    		dado.setDisable(true);
+    		rapido.setDisable(true);
+    		lento.setDisable(true);
+    		peces.setDisable(true);
+    		nieve.setDisable(true);
     		break;
     	case Normal:
     		eventos.setText("Casilla normal, todo tranquilo");
     		break;
     	}
+    	//saltar turno al acabar de verificar la casilla
+    	siguienteTurno();
+    }
+    //método para encontrar al siguiente trieno
+    private int encontrarSiguienteTrineo(int posActual) {
+        boolean encontradoActual = false;
+
+        for (int i = 0; i < tableroCasillas.length; i++) {
+            if (tableroCasillas[i] == TipoCasilla.Trineo) {
+                if (!encontradoActual && i == posActual) {
+                    encontradoActual = true; // hemos encontrado el trineo actual
+                } else if (encontradoActual) {
+                    return i; // este es el siguiente trineo, nos detenemos aquí
+                }
+            }
+        }
+        return posActual;
     }
     
     //metodo para volver al inicio
@@ -240,19 +303,18 @@ public class PantallaJuegoController {
     	Pinguino pingu = pingus.get(turno);
         Circle pinguCircle = getPinguinCircle(turno);
         
+        pingu.setPosicion(0);
         GridPane.setRowIndex(pinguCircle, 0);
         GridPane.setColumnIndex(pinguCircle, 0);
         
         eventos.setText("Un oso te ha atrapado y vuelves al inicio :(");
-        
-        turno = (turno + 1) % pingus.size(); //Asegura que el turno vaya de uno en uno
     }
 
     // Button and menu actions
 
     @FXML
     private void handleNewGame() {
-        System.out.println("Nueva Partida.");
+        System.out.println("New game.");
         try {
             // Crea nueva partida
             idPartida = bbdd.crearNuevaPartida(con);
@@ -276,192 +338,98 @@ public class PantallaJuegoController {
 
     @FXML
     private void handleSaveGame() {
-        System.out.println("Guardando Partida.");
-        
-        // Verificar si hay una partida activa
-        if (idPartida == -1) {
-            mostrarAlerta("Error", "No hay partida activa para guardar", AlertType.ERROR);
-            return;
-        }
+        System.out.println("Guardando partida...");
 
-        Connection con = null;
-        try {
-            con = bbdd.conectarBaseDatos();
-            if (con == null) {
-                mostrarAlerta("Error", "No se pudo conectar con la base de datos", AlertType.ERROR);
-                return;
-            }
+        // Crea un Task para ejecutar la lógica de guardado en un hilo de fondo
+        Task<Void> saveGameTask = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                // Abrir conexión con la base de datos
+                Connection con = bbdd.conectarBaseDatos(); // Abrir conexión con la base de datos
+                if (con == null) {
+                    Platform.runLater(() -> {
+                        eventos.setText("Error al conectar con la base de datos.");
+                    });
+                    return null;
+                }
 
-            // Deshabilitar auto-commit para manejar transacciones
-            con.setAutoCommit(false);
-            
-            boolean error = false;
-            
-            for (Pinguino pingu : pingus) {
-                if (pingu == null) {
-                    System.err.println("¡Pinguino nulo detectado!");
-                    continue;
+                // Comprobar si ya existe una partida guardada y si no, crear una nueva
+                if (idPartida == -1) {
+                    idPartida = bbdd.generarNumeroPartida(con); // Usamos la función para obtener un nuevo número de partida
+                    // Crear nueva partida en la base de datos
+                    idPartida = bbdd.crearNuevaPartida(con);
                 }
 
                 try {
-                    // Actualizar o crear participación para cada pingüino
-                    if (!bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion())) {
-                        error = true;
-                        break;
-                    }
-                } catch (SQLException e) {
-                    error = true;
-                    System.err.println("Error al guardar datos del pingüino " + pingu.getNombre());
-                    e.printStackTrace();
-                    break;
-                }
-            }
+                    // Guardamos las casillas del tablero
+                    Integer[] casillasId = getCasillasId(); // Obtener los IDs de las casillas
+                    bbdd.insertarPartida(con, "EN_CURSO", casillasId); // Crear la partida con las casillas
 
-            if (error) {
-                con.rollback();
-                mostrarAlerta("Error", "No se pudo guardar completamente la partida", AlertType.ERROR);
-            } else {
-                con.commit();
-                mostrarAlerta("Éxito", "Partida guardada correctamente", AlertType.INFORMATION);
-            }
-        } catch (SQLException e) {
-            try {
-                if (con != null) con.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-            mostrarAlerta("Error", "Error al guardar la partida: " + e.getMessage(), AlertType.ERROR);
-            e.printStackTrace();
-        } finally {
-            try {
-                if (con != null) {
-                    con.setAutoCommit(true); // Restaurar auto-commit
-                    con.close();
+                    // Guardar los datos de cada jugador
+                    for (Pinguino pingu : pingus) {
+                        // Obtener el ID del jugador
+                        int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
+
+                        // Crear la participación del jugador en la partida
+                        bbdd.crearParticipacion(con, idPartida, idJugador);
+                        // Guardar la posición del jugador, dados, peces, bolas de nieve, etc.
+                        bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion());
+                    }
+
+                    // Confirmación
+                    Platform.runLater(() -> {
+                        eventos.setText("Partida guardada correctamente.");
+                    });
+                } catch (SQLException e) {
+                    Platform.runLater(() -> {
+                        eventos.setText("Error al guardar la partida.");
+                    });
+                    e.printStackTrace();
+                } finally {
+                    // Cerrar conexión
+                    bbdd.cerrarConexion(con);
                 }
-            } catch (SQLException e) {
-                e.printStackTrace();
+                return null;
             }
-        }
+        };
+
+        // Asociamos el cambio de mensaje de progreso a un Label en la interfaz
+        saveGameTask.messageProperty().addListener((observable, oldValue, newValue) -> {
+            // Actualiza el texto del Label con el estado de la operación
+            Platform.runLater(() -> {
+                eventos.setText(newValue);
+            });
+        });
+
+        // Ejecutamos el Task en un hilo de fondo
+        Thread thread = new Thread(saveGameTask);
+        thread.setDaemon(true); // El hilo se cerrará cuando se cierre la aplicación
+        thread.start();
     }
+
+
+
+
 
     @FXML
     private void handleLoadGame() {
-        System.out.println("Cargar Partida.");
-        
-        // Mostrar diálogo para seleccionar partida
-        Optional<Integer> resultado = mostrarDialogoCargarPartida();
-        
-        if (!resultado.isPresent()) {
-            eventos.setText("Carga de partida cancelada.");
-            return;
-        }
-        
-        int numeroPartida = resultado.get();
-        Connection con = null;
-        
-        try {
-            con = bbdd.conectarBaseDatos();
-            if (con == null) {
-                mostrarAlerta("Error", "No se pudo conectar con la base de datos", AlertType.ERROR);
-                return;
-            }
-            
-            // Obtener ID de partida
-            idPartida = bbdd.obtenerIdPartida(con, numeroPartida);
-            if (idPartida == -1) {
-                mostrarAlerta("Error", "No se encontró la partida con número: " + numeroPartida, AlertType.ERROR);
-                return;
-            }
-            
-            // Cargar datos de la partida
-            Map<String, Integer> datosPartida = bbdd.cargarPartida(con, idPartida);
-            if (datosPartida == null || datosPartida.isEmpty()) {
-                mostrarAlerta("Error", "No se pudieron cargar los datos de la partida", AlertType.ERROR);
-                return;
-            }
-            
-            // Restaurar estado del juego
-            boolean cargaExitosa = true;
-            for (Pinguino pingu : pingus) {
-                if (pingu == null) continue;
-                
-                Integer posicion = datosPartida.get(pingu.getNombre());
-                if (posicion != null) {
-                    pingu.setPosicion(posicion);
-                    // Actualizar posición visual
-                    actualizarPosicionVisual(pingu);
+        System.out.println("Loaded game.");
+        int numeroPartida = obtenerNumeroPartidaDesdeInput();
+
+        if (numeroPartida != -1) {
+            try {
+                idPartida = bbdd.obtenerIdPartida(con, numeroPartida);
+                if (idPartida != -1) {
+                    eventos.setText("Partida cargada con ID: " + idPartida);
+                    // Aquí podrías restaurar datos del tablero o jugadores
                 } else {
-                    cargaExitosa = false;
-                    System.err.println("No se encontraron datos para: " + pingu.getNombre());
+                    eventos.setText("No se encontró la partida con ese número.");
                 }
-            }
-            
-            if (cargaExitosa) {
-                mostrarAlerta("Éxito", "Partida cargada correctamente", AlertType.INFORMATION);
-                eventos.setText("Partida #" + numeroPartida + " cargada. Turno del jugador " + (turno + 1));
-            } else {
-                mostrarAlerta("Advertencia", "La partida se cargó parcialmente", AlertType.WARNING);
-            }
-            
-        } catch (Exception e) {
-            mostrarAlerta("Error", "Error al cargar la partida: " + e.getMessage(), AlertType.ERROR);
-            e.printStackTrace();
-        } finally {
-            try {
-                if (con != null) con.close();
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
+                eventos.setText("Error al cargar la partida.");
             }
         }
-    }
-
-    private Optional<Integer> mostrarDialogoCargarPartida() {
-        // Crear diálogo personalizado para mostrar lista de partidas disponibles
-        List<Integer> partidasDisponibles = obtenerPartidasDisponibles();
-        
-        if (partidasDisponibles.isEmpty()) {
-            mostrarAlerta("Información", "No hay partidas guardadas disponibles", AlertType.INFORMATION);
-            return Optional.empty();
-        }
-        
-        ChoiceDialog<Integer> dialog = new ChoiceDialog<>(partidasDisponibles.get(0), partidasDisponibles);
-        dialog.setTitle("Cargar partida");
-        dialog.setHeaderText("Seleccione una partida para cargar");
-        dialog.setContentText("Partidas disponibles:");
-        
-        return dialog.showAndWait();
-    }
-
-    private List<Integer> obtenerPartidasDisponibles() {
-        Connection con = null;
-        List<Integer> partidas = new ArrayList<>();
-        
-        try {
-            con = bbdd.conectarBaseDatos();
-            if (con != null) {
-                partidas = bbdd.obtenerPartidasGuardadas(con);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (con != null) con.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-        
-        return partidas;
-    }
-
-    private void actualizarPosicionVisual(Pinguino pingu) {
-        Platform.runLater(() -> {
-            Circle pinguCircle = getPinguinCircle(pingus.indexOf(pingu));
-            int row = pingu.getPosicion() / COLUMNS;
-            int col = pingu.getPosicion() % COLUMNS;
-            GridPane.setRowIndex(pinguCircle, row);
-            GridPane.setColumnIndex(pinguCircle, col);
-        });
     }
     
     private int obtenerNumeroPartidaDesdeInput() {
@@ -487,32 +455,11 @@ public class PantallaJuegoController {
 
     @FXML
     private void handleQuitGame() {
-        System.out.println("Saliendo del juego...");
-        
-        // Mostrar confirmación antes de salir
-        Alert alert = new Alert(AlertType.CONFIRMATION);
-        alert.setTitle("Confirmar salida");
-        alert.setHeaderText("¿Está seguro que desea salir del juego?");
-        alert.setContentText("Se perderán los cambios no guardados.");
-        
-        ButtonType buttonTypeYes = new ButtonType("Sí", ButtonBar.ButtonData.YES);
-        ButtonType buttonTypeNo = new ButtonType("No", ButtonBar.ButtonData.NO);
-        alert.getButtonTypes().setAll(buttonTypeYes, buttonTypeNo);
-        
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == buttonTypeYes) {
-            // Guardar estado actual antes de salir (opcional)
-            try {
-                handleSaveGame();
-            } catch (Exception e) {
-                System.err.println("Error al guardar al salir: " + e.getMessage());
-            }
-            
-            // Cerrar la aplicación
-            Platform.exit();
-            System.exit(0);
-        }
+        System.out.println("Exit...");
+        Platform.exit(); // cierra aplicación JavaFX
+        // Alternativamente: System.exit(0);
     }
+
     
     //método para elegir de forma visual la ficha a mover
     private Circle getPinguinCircle(int index) {
@@ -525,7 +472,7 @@ public class PantallaJuegoController {
         }
     }
     
-    //metodo para hacer update de la posicion del pinguino
+    //metodo para hacer update de la posicion del pinguino y comprobar el tipo de casilla
     private void updatePenguinPosition() {
         Pinguino pingu = pingus.get(turno);
         Circle pinguCircle = getPinguinCircle(turno);
@@ -538,13 +485,24 @@ public class PantallaJuegoController {
         
         int posicion = pingu.getPosicion();
         efectoCasilla(posicion);
+    }
+    
+    //update final en caso de caer en trampas
+    private void finalUpdatePosition() {
+    	Pinguino pingu = pingus.get(turno);
+        Circle pinguCircle = getPinguinCircle(turno);
         
-        turno = (turno + 1) % pingus.size(); //Asegura que el turno vaya de uno en uno
+        int row = pingu.getPosicion() / 5; //5 X 10 grid
+        int col = pingu.getPosicion() % 5;
+        
+        GridPane.setRowIndex(pinguCircle, row);
+        GridPane.setColumnIndex(pinguCircle, col);
     }
 
     @FXML
     private void handleDado(ActionEvent event) {
         Pinguino pinguActual = pingus.get(turno);
+        actualizarInventario();
         int resulDado = pinguActual.tirarDadoNormal();
         
         dadoResultText.setText("Ha salido" + resulDado);
@@ -558,11 +516,6 @@ public class PantallaJuegoController {
         
         //Actualizar el tablero de forma visual
         updatePenguinPosition();
-        int nuevaPosicion = pinguActual.getPosicion();
-        
-        if (nuevaPosicion >= 49) {
-            eventos.setText("¡El pingüino " + pinguActual.getNombre() + " ha ganado!");
-        }
         
     }
 
@@ -571,7 +524,7 @@ public class PantallaJuegoController {
         System.out.println("Fast.");
         // TODO
         Pinguino pinguActual = pingus.get(turno);
-        
+        actualizarInventario();
         //llamamos al metodo tirar dado rápido
         int resulRapido = pinguActual.tirarDadoRapido();
         
@@ -593,19 +546,21 @@ public class PantallaJuegoController {
         System.out.println("Slow.");
         // TODO
         Pinguino pinguActual = pingus.get(turno);
+        actualizarInventario();
         
         //llamar a la función para tirar dado lento
         int resulLento = pinguActual.tirarDadoLento();
         eventos.setText("Resultado dado Lento" + resulLento);
         
         //mover al pinguino
-      //mover el pinguino
+        //mover el pinguino
         if((pinguActual.getPosicion() + resulLento) > 49) { //si la posicion a cambiar es superior al limite del tablero
         	pinguActual.setPosicion(49);
         } else {
         	pinguActual.setPosicion(pinguActual.getPosicion() + resulLento);
         }
-    }
+        updatePenguinPosition();
+    }	
 
     @FXML
     private void handlePeces() {
@@ -617,16 +572,6 @@ public class PantallaJuegoController {
     private void handleNieve() {
         System.out.println("Snow.");
         // TODO
-    }
-    
-    private void mostrarAlerta(String titulo, String mensaje, AlertType tipo) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(tipo);
-            alert.setTitle(titulo);
-            alert.setHeaderText(null);
-            alert.setContentText(mensaje);
-            alert.showAndWait();
-        });
     }
     
     //////////////////////////// INSERTAR IMAGENES ///////////////////////////////////
