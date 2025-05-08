@@ -181,7 +181,7 @@ public class bbdd {
         ps.executeUpdate();
     }
 
-    private static int generarNumeroPartida(Connection con) throws SQLException {
+    public static int generarNumeroPartida(Connection con) throws SQLException {
         // Método simple para contar partidas actuales + 1
         String sql = "SELECT NVL(MAX(Num_Partida), 0) + 1 AS nextNum FROM Partidas";
         Statement stmt = con.createStatement();

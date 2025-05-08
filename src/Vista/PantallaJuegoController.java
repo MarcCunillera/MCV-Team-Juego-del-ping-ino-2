@@ -3,6 +3,7 @@ package Vista;
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import Controlador.*;
@@ -72,6 +73,34 @@ public class PantallaJuegoController {
     private TipoCasilla[] tableroCasillas = new TipoCasilla[numCasillas]; //generar las casillas
     private IntegerProperty cantidadPeces = new SimpleIntegerProperty();
     private IntegerProperty cantidadNieve = new SimpleIntegerProperty();
+    
+    //metodo para tomar el id de casilla
+    public Integer[] getCasillasId() {
+        Integer[] ids = new Integer[tableroCasillas.length];
+        
+        // Recorremos el tablero y agregamos el índice de cada casilla
+        for (int i = 0; i < tableroCasillas.length; i++) {
+            // Dependiendo del tipo de casilla, agregamos su índice como ID
+            // Si necesitas filtrar ciertos tipos, puedes hacerlo aquí
+            if (tableroCasillas[i] != TipoCasilla.Normal) {
+                ids[i] = i; // Usamos el índice como ID
+            } else {
+                ids[i] = null; // Si es "Normal" dejamos el valor como null (opcional)
+            }
+        }
+        
+        // Filtrar valores null (si es necesario)
+        // Este paso es opcional si no deseas tener valores nulos en el array final
+        List<Integer> idList = new ArrayList<>();
+        for (Integer id : ids) {
+            if (id != null) {
+                idList.add(id);
+            }
+        }
+        
+        return idList.toArray(new Integer[0]); // Convertimos de vuelta a un array de Integer
+    }
+
     
     private int turno = 0;
     private ArrayList<Pinguino> pingus = new ArrayList<>();
@@ -310,48 +339,52 @@ public class PantallaJuegoController {
     private void handleSaveGame() {
         System.out.println("Guardando partida...");
 
-        Connection con = bbdd.conectarBaseDatos();
+        Connection con = bbdd.conectarBaseDatos(); // Abrir conexión con la base de datos
         if (con == null) {
             eventos.setText("Error al conectar con la base de datos.");
             return;
         }
 
-        try {
-            // 1. Comprobar si existe una partida con el ID actual
-            int partidaExistente = bbdd.obtenerIdPartida(con, numPartida); // numPartida = número secuencial
-            if (partidaExistente == -1) {
-                // 2. Crear nueva partida
-                idPartida = bbdd.crearNuevaPartida(con); // Esto también genera el numPartida automáticamente
-            }
+        // Comprobar si ya existe una partida guardada y si no, crear una nueva
+        if (idPartida == -1) {
+            try {
+				idPartida = bbdd.generarNumeroPartida(con);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} // Usamos la función para obtener un nuevo número de partida
+            // Crear nueva partida en la base de datos
+            idPartida = bbdd.crearNuevaPartida(con);
+        }
 
-            // 3. Guardar datos de cada jugador
+        // Guardar la partida en la base de datos (tablero, jugadores, estado, etc.)
+        try {
+            // Guardamos las casillas del tablero
+            Integer[] casillasId = getCasillasId(); // Obtener los IDs de las casillas
+            bbdd.insertarPartida(con, "EN_CURSO", casillasId); // Crear la partida con las casillas
+
+            // Guardar los datos de cada jugador
             for (Pinguino pingu : pingus) {
+                // Obtener el ID del jugador
                 int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
 
-                // Verificar si la participación existe
-                // (podrías crear un método: existeParticipacion(idPartida, idJugador))
-                // Por simplicidad, intentamos insertar. Si ya existe, puedes usar MERGE o UPDATE.
-
-                try {
-                    bbdd.insertarParticipacion(con, idPartida, idJugador, pingu.getPosicion(),
-                                               pingu.getDadoLento(), pingu.getDadoRapido(),
-                                               pingu.getPescado(), pingu.getBolasNieve());
-                } catch (SQLException e) {
-                    // Si ya existe, hacemos update
-                    bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion());
-                    // Puedes extender `actualizarParticipacion` para guardar también dados, peces, etc.
-                }
+                // Crear la participación del jugador en la partida
+                bbdd.crearParticipacion(con, idPartida, idJugador);
+                // Guardar la posición del jugador, dados, peces, bolas de nieve, etc.
+                bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion());
             }
 
+            // Confirmación
             eventos.setText("Partida guardada correctamente.");
         } catch (SQLException e) {
             eventos.setText("Error al guardar la partida.");
             e.printStackTrace();
         } finally {
+            // Cerrar conexión
             bbdd.cerrarConexion(con);
         }
-        
     }
+
 
 
 
