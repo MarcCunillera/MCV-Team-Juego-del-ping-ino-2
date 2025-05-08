@@ -60,7 +60,12 @@ public class Main {
 
 	                bbdd.crearJugador(con, nombre, contrasena);
 	                int idJugador = bbdd.obtenerIdJugador(con, nombre);
-	                bbdd.crearParticipacion(con, idPartida, idJugador);
+	                try {
+						bbdd.crearParticipacion(con, idPartida, idJugador, 0, 0, 0, 0, 0);
+					} catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 
 	                Pinguino pingu = new Pinguino(i, nombre, 0, 0, 0, 0, 0, 0);
 	                listaPinguinos.add(pingu);

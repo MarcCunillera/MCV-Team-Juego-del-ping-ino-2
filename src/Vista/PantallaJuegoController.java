@@ -328,7 +328,7 @@ public class PantallaJuegoController {
                     bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd"); // Usa una mejor contraseña en producción
                     idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
                 }
-                bbdd.crearParticipacion(con, idPartida, idJugador);
+                //bbdd.crearParticipacion(con, idPartida, idJugador);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -350,26 +350,38 @@ public class PantallaJuegoController {
                 }
 
                 try {
-                    // 1. Crear nueva partida y obtener ID
-                    idPartida = bbdd.crearNuevaPartida(con); // Este método genera un nuevo ID
+                    // 1. Crear nueva partida
+                    idPartida = bbdd.crearNuevaPartida(con); // genera ID_Partida nuevo
 
-                    // 2. Obtener array de casillas
-                    Integer[] casillas = getCasillasId(); // Debe tener 50 posiciones
-                    if (casillas.length != 50) {
+                    // 2. Obtener las 50 casillas del tablero
+                    Integer[] casillas = getCasillasId();
+                    if (casillas == null || casillas.length != 50) {
                         Platform.runLater(() -> eventos.setText("Error: el tablero debe tener 50 casillas."));
                         return null;
                     }
 
-                    // 3. Insertar partida con las casillas una a una
+                    // 3. Insertar la partida con todas las casillas
                     bbdd.insertarPartida(con, idPartida, "EN_CURSO", casillas);
 
-                    // 4. Insertar datos de todos los pingüinos
+                    // 4. Guardar participaciones para todos los pingüinos
                     for (Pinguino p : Pinguino.getListaPinguinos()) {
                         int idJugador = bbdd.obtenerIdJugador(con, p.getNombre());
+                        if (idJugador == -1) {
+                            System.err.println("Jugador no encontrado: " + p.getNombre());
+                            continue; // O puedes abortar si es crítico
+                        }
 
-                        // Crear participación
-                        int idParticipacion = bbdd.crearParticipacion(con, idPartida, idJugador, p.getPosicion(),
-                                p.getDadoLento(), p.getDadoRapido(), p.getPescado(), p.getBolasNieve());
+                        // Usar tu función crearParticipacion correctamente
+                        bbdd.crearParticipacion(
+                            con,
+                            idPartida,
+                            idJugador,
+                            p.getPosicion(),
+                            p.getDadoLento(),
+                            p.getDadoRapido(),
+                            p.getPescado(),
+                            p.getBolasNieve()
+                        );
                     }
 
                     Platform.runLater(() -> eventos.setText("Partida guardada correctamente."));
@@ -388,6 +400,7 @@ public class PantallaJuegoController {
         thread.setDaemon(true);
         thread.start();
     }
+
 
     
     private int obtenerNumeroPartidaDesdeInput() {
@@ -408,6 +421,27 @@ public class PantallaJuegoController {
         }
 
         return -1;
+    }
+    
+    @FXML
+    public void handleLoadGame() {
+    	System.out.println("Loaded game.");
+        int numeroPartida = obtenerNumeroPartidaDesdeInput();
+
+        if (numeroPartida != -1) {
+            try {
+                idPartida = bbdd.obtenerIdPartida(con, numeroPartida);
+                if (idPartida != -1) {
+                    eventos.setText("Partida cargada con ID: " + idPartida);
+                    // Aquí podrías restaurar datos del tablero o jugadores
+                } else {
+                    eventos.setText("No se encontró la partida con ese número.");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                eventos.setText("Error al cargar la partida.");
+            }
+        }
     }
 
 

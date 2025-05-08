@@ -98,12 +98,26 @@ public class bbdd {
         return id;
     }
 
-    public static void crearParticipacion(Connection con, int idPartida, int idJugador) {
-    	String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_jugador, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
-    	             "VALUES (participaciones_seq.NEXTVAL, " + idPartida + ", " + idJugador + ", 0, 0, 0, 0)";
+    public static int crearParticipacion(Connection con, int idPartida, int idJugador, int pos, int dadoLento, int dadoRapido, int peces, int bolas) throws SQLException {
+        String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
+                     "VALUES (PARTICIPACION_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
+        PreparedStatement ps = con.prepareStatement(sql);
 
-        insert(con, sql);
+        ps.setInt(1, idPartida);
+        ps.setInt(2, idJugador);
+        ps.setInt(3, pos);
+        ps.setInt(4, dadoLento);
+        ps.setInt(5, dadoRapido);
+        ps.setInt(6, peces);
+        ps.setInt(7, bolas);
+
+        ps.executeUpdate();
+        ps.close();
+
+        // Opcionalmente puedes devolver el último ID generado
+        return 0;
     }
+
 
     public static int obtenerIdPartida(Connection con, int numPartida) {
         int id = -1;
@@ -147,24 +161,35 @@ public class bbdd {
     
     
     //metodos para guardar tablero y jugadores (mrc)
-    public static int insertarPartida(Connection con, String estado, Integer[] idCasillas) throws SQLException {
-        String sql = "INSERT INTO Partidas (ID_Partida, Num_Partida, Estado, Hora, Data, ID_Casilla) " +
-                     "VALUES (seq_partida.NEXTVAL, ?, ?, SYSTIMESTAMP, SYSDATE, ?)";
+    public static void insertarPartida(Connection con, int idPartida, String estado, Integer[] casillas) throws SQLException {
+        StringBuilder sql = new StringBuilder("INSERT INTO Partidas (ID_Partida, Num_Partida, Estado, Hora, Data");
 
-        Array array = con.createArrayOf("NUMBER", idCasillas); // Oracle específico: usa STRUCT/ARRAY si es VARRAY
-        PreparedStatement ps = con.prepareStatement(sql, new String[]{"ID_Partida"});
-        ps.setInt(1, generarNumeroPartida(con));
-        ps.setString(2, estado);
-        ps.setArray(3, array); // Oracle puede requerir tipo específico (ver nota abajo)
-        ps.executeUpdate();
-
-        ResultSet rs = ps.getGeneratedKeys();
-        if (rs.next()) {
-            return rs.getInt(1);
-        } else {
-            throw new SQLException("No se pudo generar ID_Partida");
+        // Añadir nombres de columnas de casillas
+        for (int i = 1; i <= 50; i++) {
+            sql.append(", ID_Casilla_").append(i);
         }
+        sql.append(") VALUES (?, ?, ?, SYSTIMESTAMP, SYSDATE");
+
+        // Añadir signos de interrogación para los valores de casillas
+        for (int i = 1; i <= 50; i++) {
+            sql.append(", ?");
+        }
+        sql.append(")");
+
+        PreparedStatement ps = con.prepareStatement(sql.toString());
+        ps.setInt(1, idPartida);
+        ps.setInt(2, idPartida); // Num_Partida igual que ID por simplicidad
+        ps.setString(3, estado);
+
+        // Insertar los IDs de las casillas
+        for (int i = 0; i < 50; i++) {
+            ps.setString(4 + i, casillas[i] != null ? casillas[i].toString() : null);
+        }
+
+        ps.executeUpdate();
+        ps.close();
     }
+
 
     public static void insertarParticipacion(Connection con, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) throws SQLException {
         String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
