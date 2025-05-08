@@ -231,6 +231,13 @@ public class PantallaJuegoController {
     		alert.setTitle("El pinguino: " + pingu.getID() + " ha llegado a la meta!!");
     		alert.setHeaderText("El juego termina");
     		alert.showAndWait();
+    		
+    		//deshabilitar botones
+    		dado.setDisable(true);
+    		rapido.setDisable(true);
+    		lento.setDisable(true);
+    		peces.setDisable(true);
+    		nieve.setDisable(true);
     		break;
     	case Normal:
     		eventos.setText("Casilla normal, todo tranquilo");
@@ -430,7 +437,7 @@ public class PantallaJuegoController {
         	pinguActual.setPosicion(pinguActual.getPosicion() + resulLento);
         }
         updatePenguinPosition();
-    }
+    }	
 
     @FXML
     private void handlePeces() {
