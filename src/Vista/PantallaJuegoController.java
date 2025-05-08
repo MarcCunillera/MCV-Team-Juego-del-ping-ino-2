@@ -16,6 +16,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -339,50 +340,62 @@ public class PantallaJuegoController {
     private void handleSaveGame() {
         System.out.println("Guardando partida...");
 
-        Connection con = bbdd.conectarBaseDatos(); // Abrir conexión con la base de datos
-        if (con == null) {
-            eventos.setText("Error al conectar con la base de datos.");
-            return;
-        }
+        // Crea un Task para ejecutar la lógica de guardado en un hilo de fondo
+        Task<Void> saveGameTask = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                // Abrir conexión con la base de datos
+                Connection con = bbdd.conectarBaseDatos(); // Abrir conexión con la base de datos
+                if (con == null) {
+                    updateMessage("Error al conectar con la base de datos.");
+                    return null;
+                }
 
-        // Comprobar si ya existe una partida guardada y si no, crear una nueva
-        if (idPartida == -1) {
-            try {
-				idPartida = bbdd.generarNumeroPartida(con);
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} // Usamos la función para obtener un nuevo número de partida
-            // Crear nueva partida en la base de datos
-            idPartida = bbdd.crearNuevaPartida(con);
-        }
+                // Comprobar si ya existe una partida guardada y si no, crear una nueva
+                if (idPartida == -1) {
+                    idPartida = bbdd.generarNumeroPartida(con); // Usamos la función para obtener un nuevo número de partida
+                    // Crear nueva partida en la base de datos
+                    idPartida = bbdd.crearNuevaPartida(con);
+                }
 
-        // Guardar la partida en la base de datos (tablero, jugadores, estado, etc.)
-        try {
-            // Guardamos las casillas del tablero
-            Integer[] casillasId = getCasillasId(); // Obtener los IDs de las casillas
-            bbdd.insertarPartida(con, "EN_CURSO", casillasId); // Crear la partida con las casillas
+                try {
+                    // Guardamos las casillas del tablero
+                    Integer[] casillasId = getCasillasId(); // Obtener los IDs de las casillas
+                    bbdd.insertarPartida(con, "EN_CURSO", casillasId); // Crear la partida con las casillas
 
-            // Guardar los datos de cada jugador
-            for (Pinguino pingu : pingus) {
-                // Obtener el ID del jugador
-                int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
+                    // Guardar los datos de cada jugador
+                    for (Pinguino pingu : pingus) {
+                        // Obtener el ID del jugador
+                        int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
 
-                // Crear la participación del jugador en la partida
-                bbdd.crearParticipacion(con, idPartida, idJugador);
-                // Guardar la posición del jugador, dados, peces, bolas de nieve, etc.
-                bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion());
+                        // Crear la participación del jugador en la partida
+                        bbdd.crearParticipacion(con, idPartida, idJugador);
+                        // Guardar la posición del jugador, dados, peces, bolas de nieve, etc.
+                        bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion());
+                    }
+
+                    // Confirmación
+                    updateMessage("Partida guardada correctamente.");
+                } catch (SQLException e) {
+                    updateMessage("Error al guardar la partida.");
+                    e.printStackTrace();
+                } finally {
+                    // Cerrar conexión
+                    bbdd.cerrarConexion(con);
+                }
+                return null;
             }
+        };
 
-            // Confirmación
-            eventos.setText("Partida guardada correctamente.");
-        } catch (SQLException e) {
-            eventos.setText("Error al guardar la partida.");
-            e.printStackTrace();
-        } finally {
-            // Cerrar conexión
-            bbdd.cerrarConexion(con);
-        }
+        // Asociamos el cambio de mensaje de progreso a un Label en la interfaz
+        saveGameTask.messageProperty().addListener((observable, oldValue, newValue) -> {
+            eventos.setText(newValue); // Actualiza el texto del Label con el estado de la operación
+        });
+
+        // Ejecutamos el Task en un hilo de fondo
+        Thread thread = new Thread(saveGameTask);
+        thread.setDaemon(true); // El hilo se cerrará cuando se cierre la aplicación
+        thread.start();
     }
 
 
