@@ -1,6 +1,9 @@
 package Vista;
 
 import java.util.Random;
+
+import javax.swing.SwingWorker;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -9,6 +12,7 @@ import java.util.Optional;
 import Controlador.*;
 import Modelo.*;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -113,9 +117,8 @@ public class PantallaJuegoController {
     }
 
     @FXML
-    private void initialize() {
-        // This method is called automatically after the FXML is loaded
-        // You can set initial values or add listeners here
+    private void initialize() throws SQLException {
+        con = bbdd.conectarBaseDatos(); // Aquí inicializas la conexión
         eventos.setText("¡El juego ha comenzado!");
         peces_t.textProperty().bind(Bindings.concat("Peces: ", cantidadPeces.asString()));
         nieve_t.textProperty().bind(Bindings.concat("Bolas de nieve: ", cantidadNieve.asString()));
@@ -314,7 +317,7 @@ public class PantallaJuegoController {
 
     @FXML
     private void handleNewGame() {
-        System.out.println("New game.");
+        System.out.println("Nueva partida.");
         try {
             // Crea nueva partida
             idPartida = bbdd.crearNuevaPartida(con);
@@ -328,87 +331,112 @@ public class PantallaJuegoController {
                     bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd"); // Usa una mejor contraseña en producción
                     idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
                 }
-                //bbdd.crearParticipacion(con, idPartida, idJugador);
+
+                // Aquí puedes definir la posición del jugador en la partida
+                int posicion = pingu.getPosicion(); // Asegúrate de tener este dato en tu objeto Pinguino
+                int dadoLento = pingu.getDadoLento(); // Obtén los valores de dados, si están definidos en el objeto
+                int dadoRapido = pingu.getDadoRapido(); // Lo mismo para dado rápido
+                int peces = pingu.getPescado(); // Obtener peces
+                int bolasNieve = pingu.getBolasNieve(); // Obtener bolas de nieve
+
+                // Crear la participación del jugador en la nueva partida
+                bbdd.crearParticipacion(con, idPartida, idJugador, posicion, dadoLento, dadoRapido, peces, bolasNieve);
             }
         } catch (Exception e) {
             e.printStackTrace();
             eventos.setText("Error al crear nueva partida.");
         }
     }
+
     
     @FXML
-    private void handleSaveGame() {
-        System.out.println("Guardando partida...");
+    public void handleSaveGame() {
+        // Comprobar si la conexión está establecida
+        if (con == null) {
+            eventos.setText("Conexión a la base de datos no establecida.");
+            return; // Salir si no hay conexión
+        }
 
-        Task<Void> saveGameTask = new Task<Void>() {
+        // Ejecutamos la tarea de guardar en un hilo separado para no bloquear la UI
+        SwingWorker<Void, String> worker = new SwingWorker<Void, String>() {
             @Override
-            protected Void call() {
-                Connection con = bbdd.conectarBaseDatos();
-                if (con == null) {
-                    eventos.setText("Error al conectar con la base de datos.");
-                    return null;
-                }
-
+            protected Void doInBackground() {
                 try {
-                    // 1. Crear nueva partida
-                    idPartida = bbdd.crearNuevaPartida(con); // genera ID_Partida nuevo
+                    // Crear la partida en la base de datos
+                    int idPartida = bbdd.crearNuevaPartida(con);
+                    publish("Nueva partida creada con ID: " + idPartida);
 
-                    // 2. Obtener las 50 casillas del tablero
-                    Integer[] casillas = getCasillasId();
-                    if (casillas == null || casillas.length != 50) {
-                        Platform.runLater(() -> eventos.setText("Error: el tablero debe tener 50 casillas."));
-                        return null;
-                    }
+                    // Guardamos el estado de las casillas (tablero de juego)
+                    Integer[] casillas = obtenerEstadoCasillas();
+                    bbdd.insertarPartida(con, idPartida, "EN CURSO", casillas); // Guardamos el estado de las casillas
 
-                    // 3. Insertar la partida con todas las casillas
-                    bbdd.insertarPartida(con, idPartida, "EN_CURSO", casillas);
-
-                    // 4. Guardar participaciones para todos los pingüinos
-                    for (Pinguino p : Pinguino.getListaPinguinos()) {
-                        int idJugador = bbdd.obtenerIdJugador(con, p.getNombre());
+                    // Guardamos las participaciones de cada jugador (pingüino)
+                    for (Pinguino pingu : pingus) {
+                        int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
                         if (idJugador == -1) {
-                            System.err.println("Jugador no encontrado: " + p.getNombre());
-                            continue; // O puedes abortar si es crítico
+                            // Si el jugador no existe, lo creamos
+                            bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd"); // Usar mejor contraseña en producción
+                            idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
                         }
-
-                        // Usar tu función crearParticipacion correctamente
-                        bbdd.crearParticipacion(
-                            con,
-                            idPartida,
-                            idJugador,
-                            p.getPosicion(),
-                            p.getDadoLento(),
-                            p.getDadoRapido(),
-                            p.getPescado(),
-                            p.getBolasNieve()
-                        );
+                        
+                        // Crear la participación del jugador en la partida
+                        bbdd.crearParticipacion(con, idPartida, idJugador, pingu.getPosicion(),
+                                                 pingu.getDadoLento(), pingu.getDadoRapido(),
+                                                 pingu.getPescado(), pingu.getBolasNieve());
+                        publish("Participación del jugador " + pingu.getNombre() + " guardada.");
                     }
 
-                    Platform.runLater(() -> eventos.setText("Partida guardada correctamente."));
-                } catch (SQLException e) {
+                    publish("Juego guardado exitosamente.");
+                } catch (Exception e) {
                     e.printStackTrace();
-                    Platform.runLater(() -> eventos.setText("Error al guardar la partida."));
-                } finally {
-                    bbdd.cerrarConexion(con);
+                    publish("Error al guardar el juego.");
                 }
-
                 return null;
+            }
+
+            @Override
+            protected void process(List<String> chunks) {
+                // Acumula los mensajes y los actualiza en el Text
+                StringBuilder message = new StringBuilder();
+                for (String msg : chunks) {
+                    message.append(msg).append("\n");
+                }
+                eventos.setText(message.toString()); // Actualiza el texto del objeto Text
+            }
+
+            @Override
+            protected void done() {
+                // Al finalizar, actualizamos la UI para reflejar el éxito
+                try {
+                    get(); // Para lanzar una excepción si hay algún error
+                } catch (Exception e) {
+                    eventos.setText("Error al guardar el juego: " + e.getMessage() + "\n");
+                }
             }
         };
 
-        Thread thread = new Thread(saveGameTask);
-        thread.setDaemon(true);
-        thread.start();
+        // Inicia el trabajo en segundo plano
+        worker.execute();
     }
 
-
+    // Método para obtener el estado de las casillas (tablero)
+    private Integer[] obtenerEstadoCasillas() {
+        // Este método debe devolver el estado actual de las casillas del tablero
+        Integer[] casillas = new Integer[50];
+        // Ejemplo de asignación: Casilla 1 = 'INICIO', Casilla 50 = 'META', etc.
+        // Esto debe ser ajustado según cómo manejas las casillas en el juego
+        for (int i = 0; i < 50; i++) {
+            casillas[i] = i + 1; // Aquí deberías poner la lógica de asignación real
+        }
+        return casillas;
+    }
     
+    //metodo para obtener el número de partida
     private int obtenerNumeroPartidaDesdeInput() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Cargar partida");
         dialog.setHeaderText("Carga de partida");
-        dialog.setContentText("Introduce el número de partida:");
-
+        dialog.setContentText("Introduce el número de partida:");;
         Optional<String> result = dialog.showAndWait();
         if (result.isPresent()) {
             try {

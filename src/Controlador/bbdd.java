@@ -11,8 +11,8 @@ public class bbdd {
 
         System.out.println("Intentando conectarse a la base de datos");
         System.out.println("Selecciona centro o fuera de centro: (CENTRO/FUERA)");
-        String s = scan.nextLine().toLowerCase();
-
+        //String s = scan.nextLine().toLowerCase();
+        String s = "fuera";
         String URL = s.equals("centro")
                 ? "jdbc:oracle:thin:@192.168.3.26:1521/XEPDB2"
                 : "jdbc:oracle:thin:@oracle.ilerna.com:1521/XEPDB2";
@@ -150,5 +150,92 @@ public class bbdd {
         Statement stmt = con.createStatement();
         return stmt.executeQuery(sql);
     }
+    
+    public static void crearParticipacion(Connection con, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) throws SQLException {
+        String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
+                     "VALUES (PARTICIPACION_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
+
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setInt(1, idPartida);  // ID de la partida
+        ps.setInt(2, idJugador);  // ID del jugador
+        ps.setInt(3, posicion);  // Posición del jugador en la partida
+        ps.setInt(4, dadoLento);  // Dado lento del jugador
+        ps.setInt(5, dadoRapido);  // Dado rápido del jugador
+        ps.setInt(6, peces);  // Peces del jugador
+        ps.setInt(7, bolasNieve);  // Bolas de nieve del jugador
+
+        ps.executeUpdate();  // Ejecuta la inserción en la base de datos
+        ps.close();
+    }
+    
+    public static int crearNuevaPartida(Connection con) {
+        int idPartida = -1;
+        try {
+            // Aquí se crean los valores por defecto para las casillas (puedes ajustarlo según tu juego)
+            String[] casillas = new String[50]; 
+            for (int i = 0; i < casillas.length; i++) {
+                casillas[i] = "Casilla_" + (i + 1); // Ajusta esto según tu lógica de casillas
+            }
+
+            // Insertar la nueva partida en la tabla Partidas
+            String sql = "INSERT INTO Partidas " +
+                         "(ID_Partida, Num_Partida, Estado, Hora, Data, " +
+                         "ID_Casilla_1, ID_Casilla_2, ID_Casilla_3, ID_Casilla_4, ID_Casilla_5, " +
+                         "ID_Casilla_6, ID_Casilla_7, ID_Casilla_8, ID_Casilla_9, ID_Casilla_10, " +
+                         "ID_Casilla_11, ID_Casilla_12, ID_Casilla_13, ID_Casilla_14, ID_Casilla_15, " +
+                         "ID_Casilla_16, ID_Casilla_17, ID_Casilla_18, ID_Casilla_19, ID_Casilla_20, " +
+                         "ID_Casilla_21, ID_Casilla_22, ID_Casilla_23, ID_Casilla_24, ID_Casilla_25, " +
+                         "ID_Casilla_26, ID_Casilla_27, ID_Casilla_28, ID_Casilla_29, ID_Casilla_30, " +
+                         "ID_Casilla_31, ID_Casilla_32, ID_Casilla_33, ID_Casilla_34, ID_Casilla_35, " +
+                         "ID_Casilla_36, ID_Casilla_37, ID_Casilla_38, ID_Casilla_39, ID_Casilla_40, " +
+                         "ID_Casilla_41, ID_Casilla_42, ID_Casilla_43, ID_Casilla_44, ID_Casilla_45, " +
+                         "ID_Casilla_46, ID_Casilla_47, ID_Casilla_48, ID_Casilla_49, ID_Casilla_50) " +
+                         "VALUES (partidas_seq.NEXTVAL, partidas_seq.CURRVAL, 'EN_CURSO', CURRENT_TIMESTAMP, CURRENT_DATE, " +
+                         "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+            // Crear una preparación de la sentencia SQL para insertar las casillas
+            PreparedStatement ps = con.prepareStatement(sql);
+            // Establecemos las casillas como parámetros en el PreparedStatement
+            for (int i = 0; i < casillas.length; i++) {
+                ps.setString(i + 6, casillas[i]); // +6 porque los primeros 5 parámetros son ID_Partida, Num_Partida, Estado, Hora, Data
+            }
+
+            // Ejecutamos la sentencia SQL para insertar la nueva partida
+            ps.executeUpdate();
+            ps.close();
+
+            // Obtener el ID de la nueva partida creada
+            ResultSet rs = select(con, "SELECT MAX(ID_Partida) AS ID FROM Partidas");
+            if (rs.next()) {
+                idPartida = rs.getInt("ID");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return idPartida;
+    }
+
+    public static int obtenerIdPartida(Connection con, int numPartida) {
+        int idPartida = -1;
+        try {
+            // Ejecutamos la consulta para obtener el ID de la partida con el número dado
+            String sql = "SELECT ID_Partida FROM Partidas WHERE Num_Partida = ?";
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, numPartida); // Establecemos el número de partida como parámetro
+            ResultSet rs = ps.executeQuery();
+
+            // Si encontramos la partida, devolvemos el ID
+            if (rs.next()) {
+                idPartida = rs.getInt("ID_Partida");
+            }
+            ps.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return idPartida;
+    }
+
 
 }

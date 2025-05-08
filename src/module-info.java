@@ -5,6 +5,7 @@ module MCVTeamJuegoDelPinguino_2 {
 	requires javafx.controls;
 	requires javafx.fxml;
 	requires javafx.base;
+	requires java.desktop;
 	
 	opens Vista to javafx.fxml;
 	
