@@ -3,6 +3,7 @@ package Vista;
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import Controlador.*;
@@ -276,30 +277,67 @@ public class PantallaJuegoController {
     @FXML
     private void handleSaveGame() {
         System.out.println("Guardando Partida.");
-
-        Connection con = bbdd.conectarBaseDatos();
-        if (con == null) {
-            eventos.setText("Error al conectar con la base de datos.");
+        
+        // Verificar si hay una partida activa
+        if (idPartida == -1) {
+            mostrarAlerta("Error", "No hay partida activa para guardar", AlertType.ERROR);
             return;
         }
 
+        Connection con = null;
         try {
+            con = bbdd.conectarBaseDatos();
+            if (con == null) {
+                mostrarAlerta("Error", "No se pudo conectar con la base de datos", AlertType.ERROR);
+                return;
+            }
+
+            // Deshabilitar auto-commit para manejar transacciones
+            con.setAutoCommit(false);
+            
+            boolean error = false;
+            
             for (Pinguino pingu : pingus) {
                 if (pingu == null) {
                     System.err.println("¡Pinguino nulo detectado!");
                     continue;
                 }
 
-                bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion());
+                try {
+                    // Actualizar o crear participación para cada pingüino
+                    if (!bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion())) {
+                        error = true;
+                        break;
+                    }
+                } catch (SQLException e) {
+                    error = true;
+                    System.err.println("Error al guardar datos del pingüino " + pingu.getNombre());
+                    e.printStackTrace();
+                    break;
+                }
             }
 
-            eventos.setText("Partida guardada correctamente.");
-        } catch (Exception e) {
-            eventos.setText("Error al guardar la partida.");
-            e.printStackTrace(); // muestra en consola detalles del error
+            if (error) {
+                con.rollback();
+                mostrarAlerta("Error", "No se pudo guardar completamente la partida", AlertType.ERROR);
+            } else {
+                con.commit();
+                mostrarAlerta("Éxito", "Partida guardada correctamente", AlertType.INFORMATION);
+            }
+        } catch (SQLException e) {
+            try {
+                if (con != null) con.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            mostrarAlerta("Error", "Error al guardar la partida: " + e.getMessage(), AlertType.ERROR);
+            e.printStackTrace();
         } finally {
             try {
-                con.close(); // asegúrate de cerrar la conexión
+                if (con != null) {
+                    con.setAutoCommit(true); // Restaurar auto-commit
+                    con.close();
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -309,22 +347,121 @@ public class PantallaJuegoController {
     @FXML
     private void handleLoadGame() {
         System.out.println("Cargar Partida.");
-        int numeroPartida = obtenerNumeroPartidaDesdeInput();
-
-        if (numeroPartida != -1) {
-            try {
-                idPartida = bbdd.obtenerIdPartida(con, numeroPartida);
-                if (idPartida != -1) {
-                    eventos.setText("Partida cargada con ID: " + idPartida);
-                    // Aquí podrías restaurar datos del tablero o jugadores
+        
+        // Mostrar diálogo para seleccionar partida
+        Optional<Integer> resultado = mostrarDialogoCargarPartida();
+        
+        if (!resultado.isPresent()) {
+            eventos.setText("Carga de partida cancelada.");
+            return;
+        }
+        
+        int numeroPartida = resultado.get();
+        Connection con = null;
+        
+        try {
+            con = bbdd.conectarBaseDatos();
+            if (con == null) {
+                mostrarAlerta("Error", "No se pudo conectar con la base de datos", AlertType.ERROR);
+                return;
+            }
+            
+            // Obtener ID de partida
+            idPartida = bbdd.obtenerIdPartida(con, numeroPartida);
+            if (idPartida == -1) {
+                mostrarAlerta("Error", "No se encontró la partida con número: " + numeroPartida, AlertType.ERROR);
+                return;
+            }
+            
+            // Cargar datos de la partida
+            Map<String, Integer> datosPartida = bbdd.cargarPartida(con, idPartida);
+            if (datosPartida == null || datosPartida.isEmpty()) {
+                mostrarAlerta("Error", "No se pudieron cargar los datos de la partida", AlertType.ERROR);
+                return;
+            }
+            
+            // Restaurar estado del juego
+            boolean cargaExitosa = true;
+            for (Pinguino pingu : pingus) {
+                if (pingu == null) continue;
+                
+                Integer posicion = datosPartida.get(pingu.getNombre());
+                if (posicion != null) {
+                    pingu.setPosicion(posicion);
+                    // Actualizar posición visual
+                    actualizarPosicionVisual(pingu);
                 } else {
-                    eventos.setText("No se encontró la partida con ese número.");
+                    cargaExitosa = false;
+                    System.err.println("No se encontraron datos para: " + pingu.getNombre());
                 }
-            } catch (Exception e) {
+            }
+            
+            if (cargaExitosa) {
+                mostrarAlerta("Éxito", "Partida cargada correctamente", AlertType.INFORMATION);
+                eventos.setText("Partida #" + numeroPartida + " cargada. Turno del jugador " + (turno + 1));
+            } else {
+                mostrarAlerta("Advertencia", "La partida se cargó parcialmente", AlertType.WARNING);
+            }
+            
+        } catch (Exception e) {
+            mostrarAlerta("Error", "Error al cargar la partida: " + e.getMessage(), AlertType.ERROR);
+            e.printStackTrace();
+        } finally {
+            try {
+                if (con != null) con.close();
+            } catch (SQLException e) {
                 e.printStackTrace();
-                eventos.setText("Error al cargar la partida.");
             }
         }
+    }
+
+    private Optional<Integer> mostrarDialogoCargarPartida() {
+        // Crear diálogo personalizado para mostrar lista de partidas disponibles
+        List<Integer> partidasDisponibles = obtenerPartidasDisponibles();
+        
+        if (partidasDisponibles.isEmpty()) {
+            mostrarAlerta("Información", "No hay partidas guardadas disponibles", AlertType.INFORMATION);
+            return Optional.empty();
+        }
+        
+        ChoiceDialog<Integer> dialog = new ChoiceDialog<>(partidasDisponibles.get(0), partidasDisponibles);
+        dialog.setTitle("Cargar partida");
+        dialog.setHeaderText("Seleccione una partida para cargar");
+        dialog.setContentText("Partidas disponibles:");
+        
+        return dialog.showAndWait();
+    }
+
+    private List<Integer> obtenerPartidasDisponibles() {
+        Connection con = null;
+        List<Integer> partidas = new ArrayList<>();
+        
+        try {
+            con = bbdd.conectarBaseDatos();
+            if (con != null) {
+                partidas = bbdd.obtenerPartidasGuardadas(con);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (con != null) con.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return partidas;
+    }
+
+    private void actualizarPosicionVisual(Pinguino pingu) {
+        Platform.runLater(() -> {
+            Circle pinguCircle = getPinguinCircle(pingus.indexOf(pingu));
+            int row = pingu.getPosicion() / COLUMNS;
+            int col = pingu.getPosicion() % COLUMNS;
+            GridPane.setRowIndex(pinguCircle, row);
+            GridPane.setColumnIndex(pinguCircle, col);
+        });
     }
     
     private int obtenerNumeroPartidaDesdeInput() {
@@ -350,11 +487,32 @@ public class PantallaJuegoController {
 
     @FXML
     private void handleQuitGame() {
-        System.out.println("Exit...");
-        Platform.exit(); // cierra aplicación JavaFX
-        // Alternativamente: System.exit(0);
+        System.out.println("Saliendo del juego...");
+        
+        // Mostrar confirmación antes de salir
+        Alert alert = new Alert(AlertType.CONFIRMATION);
+        alert.setTitle("Confirmar salida");
+        alert.setHeaderText("¿Está seguro que desea salir del juego?");
+        alert.setContentText("Se perderán los cambios no guardados.");
+        
+        ButtonType buttonTypeYes = new ButtonType("Sí", ButtonBar.ButtonData.YES);
+        ButtonType buttonTypeNo = new ButtonType("No", ButtonBar.ButtonData.NO);
+        alert.getButtonTypes().setAll(buttonTypeYes, buttonTypeNo);
+        
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == buttonTypeYes) {
+            // Guardar estado actual antes de salir (opcional)
+            try {
+                handleSaveGame();
+            } catch (Exception e) {
+                System.err.println("Error al guardar al salir: " + e.getMessage());
+            }
+            
+            // Cerrar la aplicación
+            Platform.exit();
+            System.exit(0);
+        }
     }
-
     
     //método para elegir de forma visual la ficha a mover
     private Circle getPinguinCircle(int index) {
@@ -459,6 +617,16 @@ public class PantallaJuegoController {
     private void handleNieve() {
         System.out.println("Snow.");
         // TODO
+    }
+    
+    private void mostrarAlerta(String titulo, String mensaje, AlertType tipo) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(tipo);
+            alert.setTitle(titulo);
+            alert.setHeaderText(null);
+            alert.setContentText(mensaje);
+            alert.showAndWait();
+        });
     }
     
     //////////////////////////// INSERTAR IMAGENES ///////////////////////////////////
