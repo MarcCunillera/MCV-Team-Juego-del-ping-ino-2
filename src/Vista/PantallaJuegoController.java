@@ -462,7 +462,7 @@ public class PantallaJuegoController {
     
     @FXML
     public void handleLoadGame() {
-    	System.out.println("Loaded game.");
+        System.out.println("Loaded game.");
         int numeroPartida = obtenerNumeroPartidaDesdeInput();
 
         if (numeroPartida != -1) {
@@ -470,7 +470,27 @@ public class PantallaJuegoController {
                 idPartida = bbdd.obtenerIdPartida(con, numeroPartida);
                 if (idPartida != -1) {
                     eventos.setText("Partida cargada con ID: " + idPartida);
-                    // Aquí podrías restaurar datos del tablero o jugadores
+                    
+                    // Cargar las casillas del tablero
+                    List<Casilla> casillas;
+					try {
+						casillas = bbdd.obtenerCasillasDePartida(con, idPartida);
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+                    restaurarTablero(casillas);  // Método para restaurar el tablero
+                    
+                    // Cargar los pingüinos
+                    List<Pinguino> pinguinos;
+					try {
+						pinguinos = bbdd.obtenerPinguinosDePartida(con, idPartida);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+                    restaurarPinguinos(pinguinos);  // Método para restaurar los pingüinos en el tablero
+
                 } else {
                     eventos.setText("No se encontró la partida con ese número.");
                 }
@@ -480,6 +500,26 @@ public class PantallaJuegoController {
             }
         }
     }
+
+    private void restaurarTablero(List<Casilla> casillas) {
+        // Aquí puedes actualizar las casillas del tablero en tu interfaz gráfica
+        for (Casilla casilla : casillas) {
+            // Actualizar las casillas en la interfaz gráfica según los datos obtenidos
+            // Dependiendo de la implementación de tu tablero, puedes actualizar las casillas de esta forma:
+            // tablero.actualizarCasilla(casilla.getX(), casilla.getY(), casilla.getEstado());
+            System.out.println("Casilla restaurada en: " + casilla.getX() + ", " + casilla.getY());
+        }
+    }
+
+    private void restaurarPinguinos(List<Pinguino> pingüinos) {
+        // Restaurar la información de los pingüinos en el tablero
+        for (Pinguino pinguino : pingüinos) {
+            // Aquí puedes actualizar los pingüinos en el tablero según su posición y otros atributos
+            // Si tienes un tablero gráfico con elementos representando los pingüinos, los reposicionarías aquí.
+            System.out.println("Pinguino restaurado: " + pinguino.getNombre() + " en posición " + pinguino.getPosX() + ", " + pinguino.getPosY());
+        }
+    }
+
 
 
     @FXML

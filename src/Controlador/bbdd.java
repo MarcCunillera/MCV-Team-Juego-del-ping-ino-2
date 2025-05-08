@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 
+import Modelo.Pinguino;
+import Vista.PantallaJuegoController.TipoCasilla;
+
 public class bbdd {
 
     public static Connection conectarBaseDatos() {
@@ -108,7 +111,8 @@ public class bbdd {
 
     public static void crearJugador(Connection conn, String nickname, String contrasena) {
         PreparedStatement pstmt = null;
-
+        
+        contrasena = "12345";
         if (contrasena.length() > 8) {
             System.err.println("Error: La contraseña excede los 8 caracteres permitidos.");
             return;
@@ -290,6 +294,64 @@ public class bbdd {
         }
         return idPartida;
     }
+    
+    public List<Casilla> obtenerCasillasDePartida(Connection con, int idPartida) {
+        List<Casilla> casillas = new ArrayList<>();
+        String query = "SELECT posicion, tipo FROM casillas WHERE id_partida = ?";
+        
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
+            stmt.setInt(1, idPartida);  // Establecemos el ID de la partida como parámetro
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int posicion = rs.getInt("posicion");
+                    String tipoStr = rs.getString("tipo");
+                    TipoCasilla tipo = TipoCasilla.valueOf(tipoStr);  // Convertimos el tipo de String a TipoCasilla
+                    
+                    // Crear el objeto Casilla y agregarlo a la lista
+                    Casilla casilla = new Casilla(posicion, tipo);
+                    casillas.add(casilla);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return casillas;  // Devolvemos la lista de casillas
+    }
+
+    
+    public static List<Pinguino> obtenerPinguinosDePartida(Connection con, int idPartida) {
+        List<Pinguino> pinguinos = new ArrayList<>();
+        String query = "SELECT id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado FROM pinguinos WHERE id_partida = ?";
+        
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
+            stmt.setInt(1, idPartida);  // Establecemos el ID de la partida como parámetro
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int id = rs.getInt("id");
+                    String nombre = rs.getString("nombre");
+                    int posicion = rs.getInt("posicion");
+                    int dadoNormal = rs.getInt("dadoNormal");
+                    int dadoLento = rs.getInt("dadoLento");
+                    int dadoRapido = rs.getInt("dadoRapido");
+                    int bolasNieve = rs.getInt("bolasNieve");
+                    int pescado = rs.getInt("pescado");
+                    
+                    // Crear el objeto Pinguino con los valores obtenidos
+                    Pinguino pinguino = new Pinguino(id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado);
+                    pinguinos.add(pinguino);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return pinguinos;  // Devolvemos la lista de pingüinos
+    }
+
+
 
 
 }
