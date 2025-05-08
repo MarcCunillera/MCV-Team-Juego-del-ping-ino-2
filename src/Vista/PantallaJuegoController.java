@@ -9,6 +9,7 @@ import Controlador.*;
 import Modelo.*;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -307,20 +308,51 @@ public class PantallaJuegoController {
 
     @FXML
     private void handleSaveGame() {
-        System.out.println("Saved game.");
+        System.out.println("Guardando partida...");
 
-        Connection con = bbdd.conectarBaseDatos(); // <= IMPORTANTE: abrir conexión
+        Connection con = bbdd.conectarBaseDatos();
         if (con == null) {
             eventos.setText("Error al conectar con la base de datos.");
             return;
         }
 
-        for (Pinguino pingu : pingus) {
-            bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion());
-        }
+        try {
+            // 1. Comprobar si existe una partida con el ID actual
+            int partidaExistente = bbdd.obtenerIdPartida(con, numPartida); // numPartida = número secuencial
+            if (partidaExistente == -1) {
+                // 2. Crear nueva partida
+                idPartida = bbdd.crearNuevaPartida(con); // Esto también genera el numPartida automáticamente
+            }
 
-        eventos.setText("Partida guardada correctamente.");
+            // 3. Guardar datos de cada jugador
+            for (Pinguino pingu : pingus) {
+                int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
+
+                // Verificar si la participación existe
+                // (podrías crear un método: existeParticipacion(idPartida, idJugador))
+                // Por simplicidad, intentamos insertar. Si ya existe, puedes usar MERGE o UPDATE.
+
+                try {
+                    bbdd.insertarParticipacion(con, idPartida, idJugador, pingu.getPosicion(),
+                                               pingu.getDadoLento(), pingu.getDadoRapido(),
+                                               pingu.getPescado(), pingu.getBolasNieve());
+                } catch (SQLException e) {
+                    // Si ya existe, hacemos update
+                    bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion());
+                    // Puedes extender `actualizarParticipacion` para guardar también dados, peces, etc.
+                }
+            }
+
+            eventos.setText("Partida guardada correctamente.");
+        } catch (SQLException e) {
+            eventos.setText("Error al guardar la partida.");
+            e.printStackTrace();
+        } finally {
+            bbdd.cerrarConexion(con);
+        }
+        
     }
+
 
 
     @FXML
