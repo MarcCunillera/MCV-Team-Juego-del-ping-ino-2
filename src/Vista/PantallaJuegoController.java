@@ -338,87 +338,57 @@ public class PantallaJuegoController {
     
     @FXML
     private void handleSaveGame() {
-        System.out.println("Guardando partida...");
+        eventos.setText("Guardando partida...");
 
-        // Crea un Task para ejecutar la lógica de guardado en un hilo de fondo
         Task<Void> saveGameTask = new Task<Void>() {
             @Override
-            protected Void call() throws Exception {
-                // Abrir conexión con la base de datos
-                Connection con = bbdd.conectarBaseDatos(); // Abrir conexión con la base de datos
+            protected Void call() {
+                Connection con = bbdd.conectarBaseDatos();
                 if (con == null) {
-                    Platform.runLater(() -> {
-                        eventos.setText("Error al conectar con la base de datos.");
-                    });
+                    Platform.runLater(() -> eventos.setText("Error al conectar con la base de datos."));
                     return null;
                 }
 
-                // Comprobar si ya existe una partida guardada y si no, crear una nueva
-                if (idPartida == -1) {
-                    idPartida = bbdd.generarNumeroPartida(con); // Usamos la función para obtener un nuevo número de partida
-                    // Crear nueva partida en la base de datos
-                    idPartida = bbdd.crearNuevaPartida(con);
-                }
-
                 try {
-                    // Guardamos las casillas del tablero
-                    Integer[] casillasId = getCasillasId(); // Obtener los IDs de las casillas
-                    bbdd.insertarPartida(con, "EN_CURSO", casillasId); // Crear la partida con las casillas
+                    // 1. Crear nueva partida y obtener ID
+                    idPartida = bbdd.crearNuevaPartida(con); // Este método genera un nuevo ID
 
-                    // Guardar los datos de cada jugador
-                    for (Pinguino pingu : pingus) {
-                        // Obtener el ID del jugador
-                        int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
-
-                        // Crear la participación del jugador en la partida
-                        bbdd.crearParticipacion(con, idPartida, idJugador);
-                        // Guardar la posición del jugador, dados, peces, bolas de nieve, etc.
-                        bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion());
+                    // 2. Obtener array de casillas
+                    Integer[] casillas = getCasillasId(); // Debe tener 50 posiciones
+                    if (casillas.length != 50) {
+                        Platform.runLater(() -> eventos.setText("Error: el tablero debe tener 50 casillas."));
+                        return null;
                     }
 
-                    // Confirmación
-                    Platform.runLater(() -> {
-                        eventos.setText("Partida guardada correctamente.");
-                    });
+                    // 3. Insertar partida con las casillas una a una
+                    bbdd.insertarPartida(con, idPartida, "EN_CURSO", casillas);
+
+                    // 4. Insertar datos de todos los pingüinos
+                    for (Pinguino p : Pinguino.getListaPinguinos()) {
+                        int idJugador = bbdd.obtenerIdJugador(con, p.getNombre());
+
+                        // Crear participación
+                        int idParticipacion = bbdd.crearParticipacion(con, idPartida, idJugador, p.getPosicion(),
+                                p.getDadoLento(), p.getDadoRapido(), p.getPescado(), p.getBolasNieve());
+                    }
+
+                    Platform.runLater(() -> eventos.setText("Partida guardada correctamente."));
                 } catch (SQLException e) {
-                    Platform.runLater(() -> {
-                        eventos.setText("Error al guardar la partida.");
-                    });
                     e.printStackTrace();
+                    Platform.runLater(() -> eventos.setText("Error al guardar la partida."));
                 } finally {
-                    // Cerrar conexión
                     bbdd.cerrarConexion(con);
                 }
+
                 return null;
             }
         };
 
-        // Ejecutamos el Task en un hilo de fondo
         Thread thread = new Thread(saveGameTask);
-        thread.setDaemon(true); // El hilo se cerrará cuando se cierre la aplicación
+        thread.setDaemon(true);
         thread.start();
     }
 
-    @FXML
-    private void handleLoadGame() {
-        System.out.println("Loaded game.");
-        int numeroPartida = obtenerNumeroPartidaDesdeInput();
-
-        if (numeroPartida != -1) {
-            try {
-                idPartida = bbdd.obtenerIdPartida(con, numeroPartida);
-                if (idPartida != -1) {
-                    eventos.setText("Partida cargada con ID: " + idPartida);
-                    // Aquí podrías restaurar datos del tablero o jugadores
-                } else {
-                    eventos.setText("No se encontró la partida con ese número.");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                eventos.setText("Error al cargar la partida.");
-            }
-        }
-    }
     
     private int obtenerNumeroPartidaDesdeInput() {
         TextInputDialog dialog = new TextInputDialog();
