@@ -407,10 +407,6 @@ public class PantallaJuegoController {
         thread.start();
     }
 
-
-
-
-
     @FXML
     private void handleLoadGame() {
         System.out.println("Loaded game.");
@@ -650,3 +646,4 @@ public class PantallaJuegoController {
     }
     
 }
+
