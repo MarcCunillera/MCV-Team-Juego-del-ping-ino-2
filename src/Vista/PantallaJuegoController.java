@@ -269,7 +269,7 @@ public class PantallaJuegoController {
             //en caso de caer a la casilla del final
     	case Meta:
     		Alert alert = new Alert(AlertType.INFORMATION);
-    		alert.setTitle("El pinguino: " + pingu.getNombre() + " ha llegado a la meta!!");
+    		alert.setTitle("El pinguino: " + pingu.getID() + " ha llegado a la meta!!");
     		alert.setHeaderText("El juego termina");
     		alert.showAndWait();
     		
@@ -312,26 +312,7 @@ public class PantallaJuegoController {
         GridPane.setRowIndex(pinguCircle, 0);
         GridPane.setColumnIndex(pinguCircle, 0);
         
-        eventos.setText("Te ha atrapado un oso, al inicio ;(");
-    }
-    
-    private void alInicioNew() {
-    	turno = 0;
-    	for (Pinguino pinguino : pingus) {
-    		Circle pinguCircle = getPinguinCircle(turno);
-    		turno++;
-    		pinguino.setPosicion(0);
-            GridPane.setRowIndex(pinguCircle, 0);
-            GridPane.setColumnIndex(pinguCircle, 0);
-		}
-    	
-    	turno = 0;
-    	dado.setDisable(false);
-		rapido.setDisable(false);
-		lento.setDisable(false);
-		peces.setDisable(false);
-		nieve.setDisable(false);
-    	
+        eventos.setText("Un oso te ha atrapado y vuelves al inicio :(");
     }
 
     // Button and menu actions
@@ -375,93 +356,7 @@ public class PantallaJuegoController {
             e.printStackTrace();
             eventos.setText("Error al crear nueva partida.");
         }
-        alInicioNew();
     }
-
-    @FXML
-    public void handleSaveGame() {
-    	 Alert alerta = new Alert(AlertType.CONFIRMATION);
-    	// Comprobar si la conexión está establecida
-        if (con == null) {
-            eventos.setText("Conexión a la base de datos no establecida.");
-            return; // Salir si no hay conexión
-        }
-
-        // Ejecutamos la tarea de guardar en un hilo separado para no bloquear la UI
-        SwingWorker<Void, String> worker = new SwingWorker<Void, String>() {
-            @Override
-            protected Void doInBackground() {
-                boolean exito = false;  // Variable para controlar el éxito del proceso
-
-                try {
-                    // Crear la partida en la base de datos
-                    int idPartida = bbdd.crearNuevaPartida(con);
-                    eventos.setText("Nueva partida creada con ID: " + idPartida);
-
-                    // Guardamos el estado de las casillas (tablero de juego)
-                    Integer[] casillas = obtenerEstadoCasillas();
-                    bbdd.insertarPartida(con, idPartida, "EN CURSO", casillas); // Guardamos el estado de las casillas
-
-                    // Guardamos las participaciones de cada jugador (pingüino)
-                    for (Pinguino pingu : pingus) {
-                        int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
-                        if (idJugador == -1) {
-                            // Si el jugador no existe, lo creamos
-                            bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd"); // Usar mejor contraseña en producción
-                            idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
-                        }
-
-                        // Crear la participación del jugador en la partida
-                        bbdd.crearParticipacion(con, idPartida, idJugador, pingu.getPosicion(),
-                                                 pingu.getDadoLento(), pingu.getDadoRapido(),
-                                                 pingu.getPescado(), pingu.getBolasNieve());
-                        //eventos.setText("Participación del jugador " + pingu.getNombre() + " guardada.");
-                        
-                        alerta.setTitle("Gaurdado");
-                        alerta.setHeaderText("");
-                        alerta.setContentText("Participación del jugador " + pingu.getNombre() + " guardada.");
-                        alerta.showAndWait();
-                    }
-
-                    // Si todo se guarda correctamente, marcamos el éxito
-                    exito = true;
-                    //eventos.setText("Juego guardado exitosamente.");
-                    alerta.setTitle("Gaurdado");
-                    alerta.setHeaderText("");
-                    alerta.setContentText("Juego guardado exitosamente.");
-                    alerta.showAndWait();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    //eventos.setText("Error al guardar el juego.");
-                    alerta.setTitle("ERROR e");
-                    alerta.setHeaderText("");
-                    alerta.setContentText("Error al guardar el juego");
-                    alerta.showAndWait();
-                }
-
-                // Llamamos a done después de que la tarea termine para manejar el estado final
-                if (!exito) {
-                    publish("Ocurrió un problema durante el proceso de guardado.");
-                }
-                
-                return null;
-            }
-
-            // Este método se ejecuta cuando la tarea termina (independientemente de si tuvo éxito o no)
-            @Override
-            protected void done() {
-                try {
-                    // Aquí podemos verificar si se completó correctamente
-                    get();  // Lanzará una excepción si la tarea falló
-                } catch (Exception e) {
-                    // Si hubo un error, mostramos el mensaje de error en la UI
-                    eventos.setText("Error final al guardar el juego.");
-                }
-            }
-        };
-
-        // Iniciamos la tarea en el hilo de fondo
-        worker.execute();
 
     @FXML
     public void handleSaveGame() throws SQLException {
