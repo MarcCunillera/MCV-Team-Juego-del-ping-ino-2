@@ -120,6 +120,7 @@ public class PantallaJuegoController {
 
     @FXML
     private void initialize() throws SQLException {
+    
         con = bbdd.conectarBaseDatos(); // Aquí inicializas la conexión
         eventos.setText("¡El juego ha comenzado!");
         peces_t.textProperty().bind(Bindings.concat("Peces: ", cantidadPeces.asString()));
@@ -131,7 +132,7 @@ public class PantallaJuegoController {
         pingus.add(new Pinguino(3, "Ruperto", 0, 0, 0, 0, 0, 0));
         pingus.add(new Pinguino(4, "Alfred", 0, 0, 0, 0, 0, 0));
         
-        iniciarTablero();
+        handleNewGame();
     }
     
     //inicializar tablero
@@ -369,6 +370,9 @@ public class PantallaJuegoController {
 
                 // Crear la participación en la partida
                 bbdd.crearParticipacion(con, idPartida, idJugador, posicion, dadoLento, dadoRapido, peces, bolasNieve);
+                //iniciar tablero nuevo
+                
+                
             }
 
         } catch (Exception e) {
@@ -376,6 +380,7 @@ public class PantallaJuegoController {
             eventos.setText("Error al crear nueva partida.");
         }
         alInicioNew();
+        iniciarTablero();
     }
 
 
