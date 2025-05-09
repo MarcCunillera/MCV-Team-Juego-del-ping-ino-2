@@ -276,7 +276,9 @@ public class bbdd {
         }
 
         return idPartida;
+       }
     }
+        
 
 
     public static int obtenerIdPartida(Connection con, int numPartida) {
