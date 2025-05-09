@@ -269,7 +269,7 @@ public class PantallaJuegoController {
             //en caso de caer a la casilla del final
     	case Meta:
     		Alert alert = new Alert(AlertType.INFORMATION);
-    		alert.setTitle("El pinguino: " + pingu.getID() + " ha llegado a la meta!!");
+    		alert.setTitle("El pinguino: " + pingu.getNombre() + " ha llegado a la meta!!");
     		alert.setHeaderText("El juego termina");
     		alert.showAndWait();
     		
@@ -312,7 +312,26 @@ public class PantallaJuegoController {
         GridPane.setRowIndex(pinguCircle, 0);
         GridPane.setColumnIndex(pinguCircle, 0);
         
-        eventos.setText("Un oso te ha atrapado y vuelves al inicio :(");
+        eventos.setText("Te ha atrapado un oso, al inicio ;(");
+    }
+    
+    private void alInicioNew() {
+    	turno = 0;
+    	for (Pinguino pinguino : pingus) {
+    		Circle pinguCircle = getPinguinCircle(turno);
+    		turno++;
+    		pinguino.setPosicion(0);
+            GridPane.setRowIndex(pinguCircle, 0);
+            GridPane.setColumnIndex(pinguCircle, 0);
+		}
+    	
+    	turno = 0;
+    	dado.setDisable(false);
+		rapido.setDisable(false);
+		lento.setDisable(false);
+		peces.setDisable(false);
+		nieve.setDisable(false);
+    	
     }
 
     // Button and menu actions
@@ -356,13 +375,15 @@ public class PantallaJuegoController {
             e.printStackTrace();
             eventos.setText("Error al crear nueva partida.");
         }
+        alInicioNew();
     }
 
 
     
     @FXML
     public void handleSaveGame() {
-        // Comprobar si la conexión está establecida
+    	 Alert alerta = new Alert(AlertType.CONFIRMATION);
+    	// Comprobar si la conexión está establecida
         if (con == null) {
             eventos.setText("Conexión a la base de datos no establecida.");
             return; // Salir si no hay conexión
@@ -396,15 +417,28 @@ public class PantallaJuegoController {
                         bbdd.crearParticipacion(con, idPartida, idJugador, pingu.getPosicion(),
                                                  pingu.getDadoLento(), pingu.getDadoRapido(),
                                                  pingu.getPescado(), pingu.getBolasNieve());
-                        eventos.setText("Participación del jugador " + pingu.getNombre() + " guardada.");
+                        //eventos.setText("Participación del jugador " + pingu.getNombre() + " guardada.");
+                        
+                        alerta.setTitle("Gaurdado");
+                        alerta.setHeaderText("");
+                        alerta.setContentText("Participación del jugador " + pingu.getNombre() + " guardada.");
+                        alerta.showAndWait();
                     }
 
                     // Si todo se guarda correctamente, marcamos el éxito
                     exito = true;
-                    eventos.setText("Juego guardado exitosamente.");
+                    //eventos.setText("Juego guardado exitosamente.");
+                    alerta.setTitle("Gaurdado");
+                    alerta.setHeaderText("");
+                    alerta.setContentText("Juego guardado exitosamente.");
+                    alerta.showAndWait();
                 } catch (Exception e) {
                     e.printStackTrace();
-                    eventos.setText("Error al guardar el juego.");
+                    //eventos.setText("Error al guardar el juego.");
+                    alerta.setTitle("ERROR e");
+                    alerta.setHeaderText("");
+                    alerta.setContentText("Error al guardar el juego");
+                    alerta.showAndWait();
                 }
 
                 // Llamamos a done después de que la tarea termine para manejar el estado final
