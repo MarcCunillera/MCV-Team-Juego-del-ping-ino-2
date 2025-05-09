@@ -67,33 +67,31 @@ public class bbdd {
         return 1;
     }
 
-    public static void insertarPartida(Connection con, int idPartida, String estado, Integer[] casillas) throws SQLException {
-        StringBuilder sql = new StringBuilder("INSERT INTO Partidas (ID_Partida, Num_Partida, Estado, Hora, Data");
+    public static void insertarPartida(Connection con, int idPartida, String estado, String[] casillas) throws SQLException {
+        String sql = "INSERT INTO Partidas (ID_Partida, Num_Partida, Estado, Hora, Data, " +
+                     "ID_Casilla_1, ID_Casilla_2, ID_Casilla_3, ID_Casilla_4, ID_Casilla_5, ID_Casilla_6, " +
+                     "ID_Casilla_7, ID_Casilla_8, ID_Casilla_9, ID_Casilla_10, ID_Casilla_11, ID_Casilla_12, " +
+                     "ID_Casilla_13, ID_Casilla_14, ID_Casilla_15, ID_Casilla_16, ID_Casilla_17, ID_Casilla_18, " +
+                     "ID_Casilla_19, ID_Casilla_20, ID_Casilla_21, ID_Casilla_22, ID_Casilla_23, ID_Casilla_24, " +
+                     "ID_Casilla_25, ID_Casilla_26, ID_Casilla_27, ID_Casilla_28, ID_Casilla_29, ID_Casilla_30, " +
+                     "ID_Casilla_31, ID_Casilla_32, ID_Casilla_33, ID_Casilla_34, ID_Casilla_35, ID_Casilla_36, " +
+                     "ID_Casilla_37, ID_Casilla_38, ID_Casilla_39, ID_Casilla_40, ID_Casilla_41, ID_Casilla_42, " +
+                     "ID_Casilla_43, ID_Casilla_44, ID_Casilla_45, ID_Casilla_46, ID_Casilla_47, ID_Casilla_48, " +
+                     "ID_Casilla_49, ID_Casilla_50) " +
+                     "VALUES (?, ?, ?, SYSTIMESTAMP, SYSDATE, " +
+                     "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";  // 50 placeholders
 
-        // Añadir nombres de columnas de casillas
-        for (int i = 1; i <= 50; i++) {
-            sql.append(", ID_Casilla_").append(i);
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idPartida);
+            ps.setInt(2, idPartida); // o usa un número de partida independiente
+            ps.setString(3, estado);
+
+            for (int i = 0; i < 50; i++) {
+                ps.setString(4 + i, casillas[i]);  // Empieza en el índice 4
+            }
+
+            ps.executeUpdate();
         }
-        sql.append(") VALUES (?, ?, ?, SYSTIMESTAMP, SYSDATE");
-
-        // Añadir signos de interrogación para los valores de casillas
-        for (int i = 1; i <= 50; i++) {
-            sql.append(", ?");
-        }
-        sql.append(")");
-
-        PreparedStatement ps = con.prepareStatement(sql.toString());
-        ps.setInt(1, idPartida);
-        ps.setInt(2, idPartida); // Num_Partida igual que ID por simplicidad
-        ps.setString(3, estado);
-
-        // Insertar los IDs de las casillas
-        for (int i = 0; i < 50; i++) {
-            ps.setString(4 + i, casillas[i] != null ? casillas[i].toString() : null);
-        }
-
-        ps.executeUpdate();
-        ps.close();
     }
 
     public static int obtenerIdJugador(Connection con, String nombre) {
@@ -198,7 +196,7 @@ public class bbdd {
     }
 
     
-    public static int crearNuevaPartida(Connection con) {
+    public static int crearNuevaPartida(Connection con) throws SQLException {
         int idPartida = -1;
         final int numCasillas = 50;
 
@@ -269,6 +267,12 @@ public class bbdd {
 
         } catch (SQLException e) {
             e.printStackTrace();
+
+
+        // Obtener el siguiente valor de la secuencia sin insertar aún
+        ResultSet rs = con.createStatement().executeQuery("SELECT partidas_seq.NEXTVAL FROM DUAL");
+        if (rs.next()) {
+            idPartida = rs.getInt(1);
         }
 
         return idPartida;
@@ -320,7 +324,6 @@ public class bbdd {
         return casillas;  // Devolvemos la lista de casillas
     }
 
-    
     public static List<Pinguino> obtenerPinguinosDePartida(Connection con, int idPartida) {
         List<Pinguino> pinguinos = new ArrayList<>();
         String query = "SELECT id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado FROM pinguinos WHERE id_partida = ?";
@@ -351,7 +354,34 @@ public class bbdd {
         return pinguinos;  // Devolvemos la lista de pingüinos
     }
 
-
-
-
+    public static List<Pinguino> obtenerPinguinosDePartida(Connection con, int idPartida) {
+        List<Pinguino> pinguinos = new ArrayList<>();
+        String query = "SELECT id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado FROM pinguinos WHERE id_partida = ?";
+        
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
+            stmt.setInt(1, idPartida);  // Establecemos el ID de la partida como parámetro
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int id = rs.getInt("id");
+                    String nombre = rs.getString("nombre");
+                    int posicion = rs.getInt("posicion");
+                    int dadoNormal = rs.getInt("dadoNormal");
+                    int dadoLento = rs.getInt("dadoLento");
+                    int dadoRapido = rs.getInt("dadoRapido");
+                    int bolasNieve = rs.getInt("bolasNieve");
+                    int pescado = rs.getInt("pescado");
+                    
+                    // Crear el objeto Pinguino con los valores obtenidos
+                    Pinguino pinguino = new Pinguino(id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado);
+                    pinguinos.add(pinguino);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return pinguinos;  // Devolvemos la lista de pingüinos
+    }
+    
 }

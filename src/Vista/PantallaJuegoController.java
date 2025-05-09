@@ -378,8 +378,6 @@ public class PantallaJuegoController {
         alInicioNew();
     }
 
-
-    
     @FXML
     public void handleSaveGame() {
     	 Alert alerta = new Alert(AlertType.CONFIRMATION);
@@ -464,6 +462,20 @@ public class PantallaJuegoController {
 
         // Iniciamos la tarea en el hilo de fondo
         worker.execute();
+
+    @FXML
+    public void handleSaveGame() throws SQLException {
+        int idPartida = bbdd.crearNuevaPartida(con); // Crea y devuelve el ID
+        eventos.setText("ID de partida generado: " + idPartida);
+
+        Integer[] casillasInt = obtenerEstadoCasillas();  // Supone que devuelve Integer[]
+        String[] casillasStr = new String[casillasInt.length];
+
+        for (int i = 0; i < casillasInt.length; i++) {
+            casillasStr[i] = casillasInt[i] != null ? casillasInt[i].toString() : null;
+        }
+
+        bbdd.insertarPartida(con, idPartida, "EN CURSO", casillasStr);
     }
 
 
@@ -816,3 +828,4 @@ public class PantallaJuegoController {
     }
     
 }
+
