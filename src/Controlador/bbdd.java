@@ -164,24 +164,33 @@ public class bbdd {
     }
     
     
-    //metodos para guardar tablero y jugadores (mrc)
-    public static int insertarPartida(Connection con, String estado, Integer[] idCasillas) throws SQLException {
-        String sql = "INSERT INTO Partidas (ID_Partida, Num_Partida, Estado, Hora, Data, ID_Casilla) " +
-                     "VALUES (seq_partida.NEXTVAL, ?, ?, SYSTIMESTAMP, SYSDATE, ?)";
+    public static void insertarPartida(Connection con, int idPartida, String estado, Integer[] casillas) throws SQLException {
+        StringBuilder sql = new StringBuilder("INSERT INTO Partidas (ID_Partida, Num_Partida, Estado, Hora, Data");
 
-        Array array = con.createArrayOf("NUMBER", idCasillas); // Oracle específico: usa STRUCT/ARRAY si es VARRAY
-        PreparedStatement ps = con.prepareStatement(sql, new String[]{"ID_Partida"});
-        ps.setInt(1, generarNumeroPartida(con));
-        ps.setString(2, estado);
-        ps.setArray(3, array); // Oracle puede requerir tipo específico (ver nota abajo)
-        ps.executeUpdate();
-
-        ResultSet rs = ps.getGeneratedKeys();
-        if (rs.next()) {
-            return rs.getInt(1);
-        } else {
-            throw new SQLException("No se pudo generar ID_Partida");
+        // Añadir nombres de columnas de casillas
+        for (int i = 1; i <= 50; i++) {
+            sql.append(", ID_Casilla_").append(i);
         }
+        sql.append(") VALUES (?, ?, ?, SYSTIMESTAMP, SYSDATE");
+
+        // Añadir signos de interrogación para los valores de casillas
+        for (int i = 1; i <= 50; i++) {
+            sql.append(", ?");
+        }
+        sql.append(")");
+
+        PreparedStatement ps = con.prepareStatement(sql.toString());
+        ps.setInt(1, idPartida);
+        ps.setInt(2, idPartida); // Num_Partida igual que ID por simplicidad
+        ps.setString(3, estado);
+
+        // Insertar los IDs de las casillas
+        for (int i = 0; i < 50; i++) {
+            ps.setString(4 + i, casillas[i] != null ? casillas[i].toString() : null);
+        }
+
+        ps.executeUpdate();
+        ps.close();
     }
 
     public static void insertarParticipacion(Connection con, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) throws SQLException {
