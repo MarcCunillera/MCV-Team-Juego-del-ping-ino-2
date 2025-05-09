@@ -100,11 +100,27 @@ public class bbdd {
         return id;
     }
 
-    public static void crearParticipacion(Connection con, int idPartida, int idJugador) {
-    	String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_jugador, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
-    	             "VALUES (participaciones_seq.NEXTVAL, " + idPartida + ", " + idJugador + ", 0, 0, 0, 0)";
+    public static void crearParticipacion(Connection conn, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) {
+    	PreparedStatement pstmt = null;
 
-        insert(con, sql);
+    	try {
+    		String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
+    				"VALUES (PARTICIPACION_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
+    		pstmt = conn.prepareStatement(sql);
+    		pstmt.setInt(1, idPartida);
+    		pstmt.setInt(2, idJugador);
+    		pstmt.setInt(3, posicion);
+    		pstmt.setInt(4, dadoLento);
+    		pstmt.setInt(5, dadoRapido);
+    		pstmt.setInt(6, peces);
+    		pstmt.setInt(7, bolasNieve);
+    		pstmt.executeUpdate();
+    		System.out.println("Participación creada correctamente.");
+    	} catch (SQLException e) {
+    		System.err.println("Error al crear participación: " + e.getMessage());
+    	} finally {
+    		try { if (pstmt != null) pstmt.close(); } catch (SQLException e) { /* ignored */ }
+    	}
     }
 
     public static int obtenerIdPartida(Connection con, int numPartida) {

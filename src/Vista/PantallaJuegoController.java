@@ -388,7 +388,7 @@ public class PantallaJuegoController {
                         int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
 
                         // Crear la participación del jugador en la partida
-                        bbdd.crearParticipacion(con, idPartida, idJugador);
+                        bbdd.crearParticipacion(con, idPartida, idJugador, idJugador, idJugador, idJugador, idJugador, idJugador);
                         // Guardar la posición del jugador, dados, peces, bolas de nieve, etc.
                         bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion());
                     }
