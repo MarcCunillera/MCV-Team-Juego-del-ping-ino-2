@@ -149,8 +149,10 @@ public class PantallaJuegoController {
     	tableroCasillas[0] = TipoCasilla.Normal;
     	tableroCasillas[49] = TipoCasilla.Meta;
     	
+
+    	
     	//imagenes
-    	mostrarImagenesAgujero();
+    	mostrarImgAgujero();
     	mostrarImagenesInterrogante();
     	mostrarImagenesOso();
     	mostrarImagenesTrineo();
@@ -387,88 +389,84 @@ public class PantallaJuegoController {
     
     @FXML
     public void handleSaveGame() {
-    	 Alert alerta = new Alert(AlertType.CONFIRMATION);
-    	// Comprobar si la conexión está establecida
-        if (con == null) {
-            eventos.setText("Conexión a la base de datos no establecida.");
-            return; // Salir si no hay conexión
-        }
+        // Mostrar alerta de "guardando" antes de comenzar
+        Alert savingAlert = new Alert(AlertType.INFORMATION);
+        savingAlert.setTitle("Guardando partida");
+        savingAlert.setHeaderText(null);
+        savingAlert.setContentText("Guardando el estado del juego...");
+        savingAlert.show();
 
-        // Ejecutamos la tarea de guardar en un hilo separado para no bloquear la UI
-        SwingWorker<Void, String> worker = new SwingWorker<Void, String>() {
-            @Override
-            protected Void doInBackground() {
-                boolean exito = false;  // Variable para controlar el éxito del proceso
+        // Ejecutar en segundo plano
+        new Thread(() -> {
+            try {
+                // 1. Obtener estado actual del tablero
+                Integer[] estadoCasillas = new Integer[50];
+                for (int i = 0; i < tableroCasillas.length; i++) {
+                    estadoCasillas[i] = tableroCasillas[i].ordinal();
+                }
 
-                try {
-                    // Crear la partida en la base de datos
-                    int idPartida = bbdd.crearNuevaPartida(con);
-                    eventos.setText("Nueva partida creada con ID: " + idPartida);
+                // 2. Actualizar partida en BD
+                bbdd.actualizarPartida(con, idPartida, "EN CURSO", estadoCasillas);
 
-                    // Guardamos el estado de las casillas (tablero de juego)
-                    Integer[] casillas = obtenerEstadoCasillas();
-                    bbdd.insertarPartida(con, idPartida, "EN CURSO", casillas); // Guardamos el estado de las casillas
-
-                    // Guardamos las participaciones de cada jugador (pingüino)
-                    for (Pinguino pingu : pingus) {
-                        int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
-                        if (idJugador == -1) {
-                            // Si el jugador no existe, lo creamos
-                            bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd"); // Usar mejor contraseña en producción
-                            idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
-                        }
-
-                        // Crear la participación del jugador en la partida
-                        bbdd.crearParticipacion(con, idPartida, idJugador, pingu.getPosicion(),
-                                                 pingu.getDadoLento(), pingu.getDadoRapido(),
-                                                 pingu.getPescado(), pingu.getBolasNieve());
-                        //eventos.setText("Participación del jugador " + pingu.getNombre() + " guardada.");
-                        
-                        alerta.setTitle("Gaurdado");
-                        alerta.setHeaderText("");
-                        alerta.setContentText("Participación del jugador " + pingu.getNombre() + " guardada.");
-                        alerta.showAndWait();
+                // 3. Actualizar participaciones
+                for (Pinguino pingu : pingus) {
+                    int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
+                    if (idJugador == -1) {
+                        bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd");
+                        idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
                     }
-
-                    // Si todo se guarda correctamente, marcamos el éxito
-                    exito = true;
-                    //eventos.setText("Juego guardado exitosamente.");
-                    alerta.setTitle("Gaurdado");
-                    alerta.setHeaderText("");
-                    alerta.setContentText("Juego guardado exitosamente.");
-                    alerta.showAndWait();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    //eventos.setText("Error al guardar el juego.");
-                    alerta.setTitle("ERROR e");
-                    alerta.setHeaderText("");
-                    alerta.setContentText("Error al guardar el juego");
-                    alerta.showAndWait();
+                    
+                    bbdd.actualizarParticipacion(
+                        con, idPartida, idJugador, 
+                        pingu.getPosicion(), pingu.getDadoLento(), 
+                        pingu.getDadoRapido(), pingu.getPescado(), 
+                        pingu.getBolasNieve()
+                    );
                 }
 
-                // Llamamos a done después de que la tarea termine para manejar el estado final
-                if (!exito) {
-                    publish("Ocurrió un problema durante el proceso de guardado.");
-                }
+                // Mostrar éxito en el hilo de JavaFX
+                Platform.runLater(() -> {
+                    savingAlert.close();
+                    eventos.setText("Partida guardada correctamente (ID: " + idPartida + ")");
+                    new Alert(AlertType.INFORMATION, "Juego guardado exitosamente!").show();
+                });
                 
-                return null;
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    savingAlert.close();
+                    new Alert(AlertType.ERROR, "Error al guardar: " + e.getMessage()).show();
+                    eventos.setText("Error al guardar la partida");
+                });
             }
+        }).start();
+    }
 
-            // Este método se ejecuta cuando la tarea termina (independientemente de si tuvo éxito o no)
-            @Override
-            protected void done() {
-                try {
-                    // Aquí podemos verificar si se completó correctamente
-                    get();  // Lanzará una excepción si la tarea falló
-                } catch (Exception e) {
-                    // Si hubo un error, mostramos el mensaje de error en la UI
-                    eventos.setText("Error final al guardar el juego.");
-                }
+    /**
+     * Obtiene el estado actual del tablero como un array de enteros
+     * donde cada posición representa el tipo de casilla
+     */
+    private Integer[] obtenerEstadoActualTablero() {
+        Integer[] estadoCasillas = new Integer[50];
+        for (int i = 0; i < tableroCasillas.length; i++) {
+            estadoCasillas[i] = tableroCasillas[i].ordinal(); // Convertir enum a valor numérico
+        }
+        return estadoCasillas;
+    }
+    
+    //método para obtener el id de la partida actual
+    public static int obtenerIdPartidaActual(Connection con) throws SQLException {
+        String sql = "SELECT ID_Partida FROM Partidas WHERE Estado = 'EN CURSO' ORDER BY ID_Partida DESC FETCH FIRST 1 ROWS ONLY";
+        
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            if (rs.next()) {
+                return rs.getInt("ID_Partida");
+            } else {
+                throw new SQLException("No se encontró ninguna partida activa (EN CURSO).");
             }
-        };
-
-        // Iniciamos la tarea en el hilo de fondo
-        worker.execute();
+        }
     }
 
 
@@ -749,7 +747,7 @@ public class PantallaJuegoController {
     
     
     //imagen agujero
-    private void mostrarImagenesAgujero() {
+    private void mostrarImgAgujero() {
     	for(int i = 0; i < tableroCasillas.length; i++) {
     		if(tableroCasillas[i] == TipoCasilla.Agujero) {
     			int row = i / COLUMNS;

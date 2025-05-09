@@ -350,8 +350,46 @@ public class bbdd {
         
         return pinguinos;  // Devolvemos la lista de pingüinos
     }
+    
+    //métodos para guardar partida
+    public static void actualizarPartida(Connection con, int idPartida, String estado, Integer[] casillas) throws SQLException {
+        StringBuilder sql = new StringBuilder("UPDATE Partidas SET Estado = ?, ");
 
+        // Actualizar los valores de las casillas
+        for (int i = 1; i <= 50; i++) {
+            sql.append("ID_Casilla_").append(i).append(" = ?, ");
+        }
+        sql.setLength(sql.length() - 2);  // Eliminar la última coma
+        sql.append(" WHERE ID_Partida = ?");
 
+        PreparedStatement ps = con.prepareStatement(sql.toString());
+        ps.setString(1, estado);
+
+        // Insertar los valores de las casillas
+        for (int i = 0; i < 50; i++) {
+            ps.setInt(2 + i, casillas[i]);
+        }
+
+        ps.setInt(52, idPartida);  // ID de la partida a actualizar
+        ps.executeUpdate();
+        ps.close();
+    }
+
+    public static void actualizarParticipacion(Connection con, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) throws SQLException {
+        String sql = "UPDATE Participaciones SET Jugador_Pos = ?, Dado_Lento = ?, Dado_Rapido = ?, Peces = ?, Bolas_Nieve = ? WHERE ID_Partida = ? AND ID_Jugador = ?";
+
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setInt(1, posicion);
+        ps.setInt(2, dadoLento);
+        ps.setInt(3, dadoRapido);
+        ps.setInt(4, peces);
+        ps.setInt(5, bolasNieve);
+        ps.setInt(6, idPartida);
+        ps.setInt(7, idJugador);
+
+        ps.executeUpdate();
+        ps.close();
+    }
 
 
 }
