@@ -314,22 +314,39 @@ public class PantallaJuegoController {
 
     @FXML
     private void handleNewGame() {
-        System.out.println("New game.");
+        System.out.println("Nueva partida.");
         try {
-            // Crea nueva partida
-            idPartida = bbdd.crearNuevaPartida(con);
+            // Generar tablero y guardar partida en base de datos
+            idPartida = bbdd.crearNuevaPartida(con); // ¡Aquí ya se genera el tablero aleatorio dentro!
+            
+            if (idPartida == -1) {
+                eventos.setText("Error al crear la partida. Verifica la conexión o la base de datos.");
+                return;
+            }
+
             eventos.setText("Nueva partida creada con ID: " + idPartida);
 
-            // Crea una participación para cada jugador
+            // Crear participación para cada jugador (pingüino)
             for (Pinguino pingu : pingus) {
                 int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
+
                 if (idJugador == -1) {
                     // Si no existe el jugador, lo crea
-                    bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd"); // Usa una mejor contraseña en producción
+                    bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd"); // Mejora esto en producción
                     idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
                 }
-                bbdd.crearParticipacion(con, idPartida, idJugador);
+
+                // Obtener datos del pingüino
+                int posicion = pingu.getPosicion(); // Posición inicial
+                int dadoLento = pingu.getDadoLento();
+                int dadoRapido = pingu.getDadoRapido();
+                int peces = pingu.getPescado();
+                int bolasNieve = pingu.getBolasNieve();
+
+                // Crear la participación en la partida
+                bbdd.crearParticipacion(con, idPartida, idJugador, posicion, dadoLento, dadoRapido, peces, bolasNieve);
             }
+
         } catch (Exception e) {
             e.printStackTrace();
             eventos.setText("Error al crear nueva partida.");
