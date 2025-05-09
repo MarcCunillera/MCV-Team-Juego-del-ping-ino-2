@@ -245,7 +245,7 @@ public class bbdd {
             for (int i = 1; i <= numCasillas; i++) {
                 sql.append(", ID_Casilla_").append(i);
             }
-            sql.append(") VALUES (partidas_seq.NEXTVAL, partidas_seq.CURRVAL, 'EN_CURSO', CURRENT_TIMESTAMP, CURRENT_DATE");
+            sql.append(") VALUES (PARTIDAS_SEQ.NEXTVAL, partidas_seq.CURRVAL, 'EN_CURSO', CURRENT_TIMESTAMP, CURRENT_DATE");
 
             for (int i = 0; i < numCasillas; i++) {
                 sql.append(", ?");
