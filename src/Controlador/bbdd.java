@@ -198,76 +198,6 @@ public class bbdd {
     
     public static int crearNuevaPartida(Connection con) throws SQLException {
         int idPartida = -1;
-        final int numCasillas = 50;
-
-        try {
-            String[] casillas = new String[numCasillas];
-
-            // Inicializamos con tipo Normal por defecto
-            Arrays.fill(casillas, "Normal");
-
-            // Posiciones especiales
-            casillas[0] = "Normal"; // INICIO
-            casillas[numCasillas - 1] = "Meta"; // META
-
-            // Definimos los límites de cada tipo especial
-            Map<String, Integer> limites = new HashMap<>();
-            limites.put("Agujero", 4);
-            limites.put("Oso", 3);
-            limites.put("Interrogante", 7);
-            limites.put("Trineo", 4);
-
-            List<Integer> posiciones = new ArrayList<>();
-            for (int i = 1; i < numCasillas - 1; i++) {
-                posiciones.add(i); // Posiciones del 2 al 49 (índices 1 a 48)
-            }
-
-            Collections.shuffle(posiciones); // Aleatorizamos las posiciones
-
-            Random rand = new Random();
-            int index = 0;
-
-            // Asignar los tipos limitados
-            for (Map.Entry<String, Integer> entry : limites.entrySet()) {
-                String tipo = entry.getKey();
-                int cantidad = entry.getValue();
-                for (int i = 0; i < cantidad; i++) {
-                    casillas[posiciones.get(index++)] = tipo;
-                }
-            }
-
-            // Armamos la sentencia SQL
-            StringBuilder sql = new StringBuilder("INSERT INTO Partidas " +
-                "(ID_Partida, Num_Partida, Estado, Hora, Data");
-
-            for (int i = 1; i <= numCasillas; i++) {
-                sql.append(", ID_Casilla_").append(i);
-            }
-            sql.append(") VALUES (partidas_seq.NEXTVAL, partidas_seq.CURRVAL, 'EN_CURSO', CURRENT_TIMESTAMP, CURRENT_DATE");
-
-            for (int i = 0; i < numCasillas; i++) {
-                sql.append(", ?");
-            }
-            sql.append(")");
-
-            PreparedStatement ps = con.prepareStatement(sql.toString());
-
-            for (int i = 0; i < numCasillas; i++) {
-                ps.setString(i + 1, casillas[i]);
-            }
-
-            ps.executeUpdate();
-            ps.close();
-
-            // Recuperar el ID de la partida
-            ResultSet rs = select(con, "SELECT MAX(ID_Partida) AS ID FROM Partidas");
-            if (rs.next()) {
-                idPartida = rs.getInt("ID");
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-
 
         // Obtener el siguiente valor de la secuencia sin insertar aún
         ResultSet rs = con.createStatement().executeQuery("SELECT partidas_seq.NEXTVAL FROM DUAL");
@@ -276,9 +206,7 @@ public class bbdd {
         }
 
         return idPartida;
-       }
     }
-        
 
 
     public static int obtenerIdPartida(Connection con, int numPartida) {
@@ -326,36 +254,7 @@ public class bbdd {
         return casillas;  // Devolvemos la lista de casillas
     }
 
-    public static List<Pinguino> obtenerPinguinosDePartida(Connection con, int idPartida) {
-        List<Pinguino> pinguinos = new ArrayList<>();
-        String query = "SELECT id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado FROM pinguinos WHERE id_partida = ?";
-        
-        try (PreparedStatement stmt = con.prepareStatement(query)) {
-            stmt.setInt(1, idPartida);  // Establecemos el ID de la partida como parámetro
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    int id = rs.getInt("id");
-                    String nombre = rs.getString("nombre");
-                    int posicion = rs.getInt("posicion");
-                    int dadoNormal = rs.getInt("dadoNormal");
-                    int dadoLento = rs.getInt("dadoLento");
-                    int dadoRapido = rs.getInt("dadoRapido");
-                    int bolasNieve = rs.getInt("bolasNieve");
-                    int pescado = rs.getInt("pescado");
-                    
-                    // Crear el objeto Pinguino con los valores obtenidos
-                    Pinguino pinguino = new Pinguino(id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado);
-                    pinguinos.add(pinguino);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return pinguinos;  // Devolvemos la lista de pingüinos
-    }
-
+    
     public static List<Pinguino> obtenerPinguinosDePartida(Connection con, int idPartida) {
         List<Pinguino> pinguinos = new ArrayList<>();
         String query = "SELECT id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado FROM pinguinos WHERE id_partida = ?";
