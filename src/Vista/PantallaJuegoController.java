@@ -441,18 +441,6 @@ public class PantallaJuegoController {
             }
         }).start();
     }
-
-    /**
-     * Obtiene el estado actual del tablero como un array de enteros
-     * donde cada posición representa el tipo de casilla
-     */
-    private Integer[] obtenerEstadoActualTablero() {
-        Integer[] estadoCasillas = new Integer[50];
-        for (int i = 0; i < tableroCasillas.length; i++) {
-            estadoCasillas[i] = tableroCasillas[i].ordinal(); // Convertir enum a valor numérico
-        }
-        return estadoCasillas;
-    }
     
     //método para obtener el id de la partida actual
     public static int obtenerIdPartidaActual(Connection con) throws SQLException {
