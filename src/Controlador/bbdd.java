@@ -67,7 +67,7 @@ public class bbdd {
         return 1;
     }
 
-    public static void insertarPartida(Connection con, int idPartida, String estado, Integer[] casillas) throws SQLException {
+    public static void insertarPartida(Connection con, int idPartida, String estado, String[] casillasStr) throws SQLException {
         StringBuilder sql = new StringBuilder("INSERT INTO Partidas (ID_Partida, Num_Partida, Estado, Hora, Data");
 
         // Añadir nombres de columnas de casillas
@@ -89,7 +89,7 @@ public class bbdd {
 
         // Insertar los IDs de las casillas
         for (int i = 0; i < 50; i++) {
-            ps.setString(4 + i, casillas[i] != null ? casillas[i].toString() : null);
+            ps.setString(4 + i, casillasStr[i] != null ? casillasStr[i].toString() : null);
         }
 
         ps.executeUpdate();
