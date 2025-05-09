@@ -237,7 +237,7 @@ public class bbdd {
                     casillas[posiciones.get(index++)] = tipo;
                 }
             }
-
+            
             // Armamos la sentencia SQL
             StringBuilder sql = new StringBuilder("INSERT INTO Partidas " +
                 "(ID_Partida, Num_Partida, Estado, Hora, Data");
@@ -266,7 +266,7 @@ public class bbdd {
             if (rs.next()) {
                 idPartida = rs.getInt("ID");
             }
-
+            
         } catch (SQLException e) {
             e.printStackTrace();
         }
