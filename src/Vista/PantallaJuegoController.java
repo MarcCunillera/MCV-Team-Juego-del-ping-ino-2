@@ -1,6 +1,9 @@
 package Vista;
 
 import java.util.Random;
+
+import javax.swing.SwingWorker;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -9,7 +12,10 @@ import java.util.Optional;
 import Controlador.*;
 import Modelo.*;
 
+import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import javafx.application.Platform;
@@ -113,18 +119,17 @@ public class PantallaJuegoController {
     }
 
     @FXML
-    private void initialize() {
-        // This method is called automatically after the FXML is loaded
-        // You can set initial values or add listeners here
+    private void initialize() throws SQLException {
+        con = bbdd.conectarBaseDatos(); // Aquí inicializas la conexión
         eventos.setText("¡El juego ha comenzado!");
         peces_t.textProperty().bind(Bindings.concat("Peces: ", cantidadPeces.asString()));
         nieve_t.textProperty().bind(Bindings.concat("Bolas de nieve: ", cantidadNieve.asString()));
         //añadir la lista de pinguinos
         //pingus = Pinguino.getListaPinguinos();
-        pingus.add(new Pinguino(1, "Pinguino 1", 0, 0, 0, 0, 0, 0));
-        pingus.add(new Pinguino(2, "Pinguino 1", 0, 0, 0, 0, 0, 0));
-        pingus.add(new Pinguino(3, "Pinguino 1", 0, 0, 0, 0, 0, 0));
-        pingus.add(new Pinguino(4, "Pinguino 1", 0, 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(1, "Toñin", 0, 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(2, "Juan", 0, 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(3, "Ruperto", 0, 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(4, "Alfred", 0, 0, 0, 0, 0, 0));
         
         iniciarTablero();
     }
@@ -353,104 +358,99 @@ public class PantallaJuegoController {
         }
     }
 
+
+    
     @FXML
-    private void handleSaveGame() {
-        System.out.println("Guardando partida...");
+    public void handleSaveGame() {
+        // Comprobar si la conexión está establecida
+        if (con == null) {
+            eventos.setText("Conexión a la base de datos no establecida.");
+            return; // Salir si no hay conexión
+        }
 
-        // Crea un Task para ejecutar la lógica de guardado en un hilo de fondo
-        Task<Void> saveGameTask = new Task<Void>() {
+        // Ejecutamos la tarea de guardar en un hilo separado para no bloquear la UI
+        SwingWorker<Void, String> worker = new SwingWorker<Void, String>() {
             @Override
-            protected Void call() throws Exception {
-                // Abrir conexión con la base de datos
-                Connection con = bbdd.conectarBaseDatos(); // Abrir conexión con la base de datos
-                if (con == null) {
-                    Platform.runLater(() -> {
-                        eventos.setText("Error al conectar con la base de datos.");
-                    });
-                    return null;
-                }
-
-                // Comprobar si ya existe una partida guardada y si no, crear una nueva
-                if (idPartida == -1) {
-                    idPartida = bbdd.generarNumeroPartida(con); // Usamos la función para obtener un nuevo número de partida
-                    // Crear nueva partida en la base de datos
-                    idPartida = bbdd.crearNuevaPartida(con);
-                }
+            protected Void doInBackground() {
+                boolean exito = false;  // Variable para controlar el éxito del proceso
 
                 try {
-                    // Guardamos las casillas del tablero
-                    Integer[] casillasId = getCasillasId(); // Obtener los IDs de las casillas
-                    bbdd.insertarPartida(con, "EN_CURSO", casillasId); // Crear la partida con las casillas
+                    // Crear la partida en la base de datos
+                    int idPartida = bbdd.crearNuevaPartida(con);
+                    eventos.setText("Nueva partida creada con ID: " + idPartida);
 
-                    // Guardar los datos de cada jugador
+                    // Guardamos el estado de las casillas (tablero de juego)
+                    Integer[] casillas = obtenerEstadoCasillas();
+                    bbdd.insertarPartida(con, idPartida, "EN CURSO", casillas); // Guardamos el estado de las casillas
+
+                    // Guardamos las participaciones de cada jugador (pingüino)
                     for (Pinguino pingu : pingus) {
-                        // Obtener el ID del jugador
                         int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
+                        if (idJugador == -1) {
+                            // Si el jugador no existe, lo creamos
+                            bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd"); // Usar mejor contraseña en producción
+                            idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
+                        }
 
                         // Crear la participación del jugador en la partida
-                        bbdd.crearParticipacion(con, idPartida, idJugador, idJugador, idJugador, idJugador, idJugador, idJugador);
-                        // Guardar la posición del jugador, dados, peces, bolas de nieve, etc.
-                        bbdd.actualizarParticipacion(con, idPartida, pingu.getNombre(), pingu.getPosicion());
+                        bbdd.crearParticipacion(con, idPartida, idJugador, pingu.getPosicion(),
+                                                 pingu.getDadoLento(), pingu.getDadoRapido(),
+                                                 pingu.getPescado(), pingu.getBolasNieve());
+                        eventos.setText("Participación del jugador " + pingu.getNombre() + " guardada.");
                     }
 
-                    // Confirmación
-                    Platform.runLater(() -> {
-                        eventos.setText("Partida guardada correctamente.");
-                    });
-                } catch (SQLException e) {
-                    Platform.runLater(() -> {
-                        eventos.setText("Error al guardar la partida.");
-                    });
+                    // Si todo se guarda correctamente, marcamos el éxito
+                    exito = true;
+                    eventos.setText("Juego guardado exitosamente.");
+                } catch (Exception e) {
                     e.printStackTrace();
-                } finally {
-                    // Cerrar conexión
-                    bbdd.cerrarConexion(con);
+                    eventos.setText("Error al guardar el juego.");
                 }
+
+                // Llamamos a done después de que la tarea termine para manejar el estado final
+                if (!exito) {
+                    publish("Ocurrió un problema durante el proceso de guardado.");
+                }
+                
                 return null;
+            }
+
+            // Este método se ejecuta cuando la tarea termina (independientemente de si tuvo éxito o no)
+            @Override
+            protected void done() {
+                try {
+                    // Aquí podemos verificar si se completó correctamente
+                    get();  // Lanzará una excepción si la tarea falló
+                } catch (Exception e) {
+                    // Si hubo un error, mostramos el mensaje de error en la UI
+                    eventos.setText("Error final al guardar el juego.");
+                }
             }
         };
 
-        // Asociamos el cambio de mensaje de progreso a un Label en la interfaz
-        saveGameTask.messageProperty().addListener((observable, oldValue, newValue) -> {
-            // Actualiza el texto del Label con el estado de la operación
-            Platform.runLater(() -> {
-                eventos.setText(newValue);
-            });
-        });
-
-        // Ejecutamos el Task en un hilo de fondo
-        Thread thread = new Thread(saveGameTask);
-        thread.setDaemon(true); // El hilo se cerrará cuando se cierre la aplicación
-        thread.start();
+        // Iniciamos la tarea en el hilo de fondo
+        worker.execute();
     }
 
-    @FXML
-    private void handleLoadGame() {
-        System.out.println("Loaded game.");
-        int numeroPartida = obtenerNumeroPartidaDesdeInput();
 
-        if (numeroPartida != -1) {
-            try {
-                idPartida = bbdd.obtenerIdPartida(con, numeroPartida);
-                if (idPartida != -1) {
-                    eventos.setText("Partida cargada con ID: " + idPartida);
-                    // Aquí podrías restaurar datos del tablero o jugadores
-                } else {
-                    eventos.setText("No se encontró la partida con ese número.");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                eventos.setText("Error al cargar la partida.");
-            }
+    // Método para obtener el estado de las casillas (tablero)
+    private Integer[] obtenerEstadoCasillas() {
+        // Este método debe devolver el estado actual de las casillas del tablero
+        Integer[] casillas = new Integer[50];
+        // Ejemplo de asignación: Casilla 1 = 'INICIO', Casilla 50 = 'META', etc.
+        // Esto debe ser ajustado según cómo manejas las casillas en el juego
+        for (int i = 0; i < 50; i++) {
+            casillas[i] = i + 1; // Aquí deberías poner la lógica de asignación real
         }
+        return casillas;
     }
     
+    //metodo para obtener el número de partida
     private int obtenerNumeroPartidaDesdeInput() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Cargar partida");
         dialog.setHeaderText("Carga de partida");
-        dialog.setContentText("Introduce el número de partida:");
-
+        dialog.setContentText("Introduce el número de partida:");;
         Optional<String> result = dialog.showAndWait();
         if (result.isPresent()) {
             try {
@@ -464,6 +464,125 @@ public class PantallaJuegoController {
 
         return -1;
     }
+    
+    @FXML
+    public void handleLoadGame() {
+        System.out.println("Loaded game.");
+        int numeroPartida = obtenerNumeroPartidaDesdeInput();
+
+        if (numeroPartida != -1) {
+            try {
+                idPartida = bbdd.obtenerIdPartida(con, numeroPartida);
+                if (idPartida != -1) {
+                    eventos.setText("Partida cargada con ID: " + idPartida);
+                    
+                    // Restaurar tablero y pingüinos
+                    restaurarTablero();
+                    restaurarPinguinos();
+                } else {
+                    eventos.setText("No se encontró la partida con ese número.");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                eventos.setText("Error al cargar la partida.");
+            }
+        }
+    }
+
+
+    public void restaurarTablero() {
+        try {
+            // Recuperar las casillas de la base de datos usando el idPartida
+            String queryCasillas = "SELECT casilla_id, tipo, posicion FROM casillas WHERE id_partida = ?";
+            try (PreparedStatement stmt = con.prepareStatement(queryCasillas)) {
+                stmt.setInt(1, idPartida); // Usamos idPartida para filtrar las casillas
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        int casillaId = rs.getInt("casilla_id");
+                        String tipoCasilla = rs.getString("tipo");
+                        int posicion = rs.getInt("posicion");
+
+                        // Determinar el tipo de casilla
+                        TipoCasilla tipo = TipoCasilla.valueOf(tipoCasilla);
+
+                        // Actualizar la casilla en el tablero
+                        tableroCasillas[posicion] = tipo;
+                    }
+                }
+            }
+            
+            // Si tienes otros recursos como nieve y peces, actualízalos aquí si es necesario.
+            // actualizarRecursos(); // Descomentar si se necesita actualizar los recursos
+
+            eventos.setText("Tablero restaurado exitosamente.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            eventos.setText("Error al restaurar el tablero.");
+        }
+    }
+
+
+    public void restaurarPinguinos() {
+        try {
+            // Recuperar los pingüinos de la base de datos usando el idPartida
+            String queryPinguinos = "SELECT id, nombre, posicion, dado_normal, dado_lento, dado_rapido, bolas_nieve, pescado FROM pinguinos WHERE id_partida = ?";
+            try (PreparedStatement stmt = con.prepareStatement(queryPinguinos)) {
+                stmt.setInt(1, idPartida); // Usamos idPartida para filtrar los pingüinos
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        int id = rs.getInt("id");
+                        String nombre = rs.getString("nombre");
+                        int posicion = rs.getInt("posicion");
+                        int dadoNormal = rs.getInt("dado_normal");
+                        int dadoLento = rs.getInt("dado_lento");
+                        int dadoRapido = rs.getInt("dado_rapido");
+                        int bolasNieve = rs.getInt("bolas_nieve");
+                        int pescado = rs.getInt("pescado");
+
+                        // Crear el pingüino y añadirlo a la lista
+                        new Pinguino(id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado);
+                    }
+                }
+            }
+
+            eventos.setText("Pingüinos restaurados exitosamente.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            eventos.setText("Error al restaurar los pingüinos.");
+        }
+    }
+
+    
+    public void actualizarRecursos() {
+        // Aquí podrías actualizar los recursos del juego, como los peces y la nieve
+        // Si tienes una tabla en la base de datos que guarda la cantidad de estos recursos, 
+        // la consulta podría ser algo como esto:
+
+        String query = "SELECT cantidad_peces, cantidad_nieve FROM recursos WHERE id_partida = ?";
+        
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
+            stmt.setInt(1, idPartida);  // Usamos el idPartida para filtrar los recursos específicos
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int cantidadPecesRecuperados = rs.getInt("cantidad_peces");
+                    int cantidadNieveRecuperada = rs.getInt("cantidad_nieve");
+                    
+                    // Actualizamos las propiedades
+                    cantidadPeces.set(cantidadPecesRecuperados);
+                    cantidadNieve.set(cantidadNieveRecuperada);
+                    
+                    // Si hay algún componente en la UI que depende de estos valores, 
+                    // los puedes actualizar aquí también.
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 
     @FXML
