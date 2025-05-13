@@ -193,7 +193,7 @@ public class PantallaJuegoController {
     	switch(casilla) {
     	//caso del oso
     	case Oso:
-    		if (cantidadPeces.get() > 0) {
+    		if (cantidadPeces.get() > 2) {
     			Platform.runLater(() -> {
                     Alert alert = new Alert(AlertType.CONFIRMATION);
                     alert.setTitle("Alerta! oso a la vista");
@@ -206,8 +206,8 @@ public class PantallaJuegoController {
                     
                     Optional<ButtonType> result = alert.showAndWait();
                     if (result.isPresent() && result.get() == siELec) {
-                        cantidadPeces.set(cantidadPeces.get() - 1);
-                        eventos.setText("Has sobornado al oso con 1 pez.");
+                        cantidadPeces.set(cantidadPeces.get() - 2);
+                        eventos.setText("Has sobornado al oso con 2 pezes");
                     } else {
                         //volver al inicio
                     	alInicio();
@@ -238,23 +238,58 @@ public class PantallaJuegoController {
     		break;
     		//caso de interrogante
     	case Interrogante:
-    		if(rn.nextBoolean()) {
-    			if(cantidadNieve.get() >= 6) { //COMPROBAR QUE NO SUPERE EL MAXIMO DE BOLAS DE NIEVE
-    				cantidadNieve.set(6);
-    				eventos.setText("Ya tienes el maximo de Nieve possible " + cantidadNieve.get());
-    			}else { //EN CASO DE QUE NO SUPERE EL LIMITE
-    				int nieve = rn.nextInt(3) + 1;
-        			cantidadNieve.set(cantidadNieve.get() + nieve);
-        			eventos.setText("Has conseguido " + nieve + " Bolas de Nieve!!!");
-    			}
-    		}else {
-    			if(cantidadPeces.get() >= 2 ) { //COMPROBAR QUE NO TENGA MAS DE 2 PECES
-    				eventos.setText("Ya tienes el maximo de peces " + cantidadPeces.get());
-    			}else { //EN CASO DE QUE TENGA MAS DE 2 PECES
-    				cantidadPeces.set(cantidadPeces.get() + 1);
-        			eventos.setText("Has conseguido 1 Pez!!!");
-    			}
+    		int elec = rn.nextInt(2) +1;
+    		if (elec == 1) {
+    			if(rn.nextBoolean()) {
+        			if(cantidadNieve.get() >= 6) { //comprobar maximos
+        				cantidadNieve.set(6);
+        				eventos.setText("Ya tienes el maximo de Nieve possible " + cantidadNieve.get());
+        			}else { //si no supera el límite
+        				int nieve = rn.nextInt(3) + 1;
+            			cantidadNieve.set(cantidadNieve.get() + nieve);
+            			eventos.setText("Has conseguido " + nieve + " Bolas de Nieve!!!");
+        			}
+        		}else {
+        			if(cantidadPeces.get() >= 5 ) { //comprobar maximos
+        				eventos.setText("Ya tienes el maximo de peces " + cantidadPeces.get());
+        			}else { //en caso de no superar maximos
+        				cantidadPeces.set(cantidadPeces.get() + 1);
+            			eventos.setText("Has conseguido 1 Pez!!!");
+        			}
+        		}
+    		} else {
+    			if(rn.nextBoolean()) {
+    				//dado lento
+        			if(pingu.getDadoLento() >= 4) { //comprobar maximos
+        				pingu.setDadoLento(4);
+        				eventos.setText("Ya tienes el máximo de dados lentos " + pingu.getDadoLento());
+        			}else { //si no supera el límite
+            			pingu.setDadoLento(pingu.getDadoLento() + 1);
+            			eventos.setText("Has conseguido 1 dado lento");
+        			}
+        		}else {
+        			//dado rápido
+        			int prob = rn.nextInt(4) +1;
+        			if (prob == 1) {
+        				if(pingu.getDadoRapido() >= 4) { //comprobar maximos
+            				eventos.setText("Ya tienes el maximo de dados rapidos");
+            			}else { //en caso de no superar maximos
+            				pingu.setDadoRapido(pingu.getDadoRapido() +1);
+                			eventos.setText("Has conseguido 1 dado rápido!!!");
+            			}
+					} else {
+						//dado lento
+	        			if(pingu.getDadoLento() >= 4) { //comprobar maximos
+	        				pingu.setDadoLento(4);
+	        				eventos.setText("Ya tienes el máximo de dados lentos " + pingu.getDadoLento());
+	        			}else { //si no supera el límite
+	            			pingu.setDadoLento(pingu.getDadoLento() + 1);
+	            			eventos.setText("Has conseguido 1 dado lento");
+	        			}
+					}
+        		}
     		}
+    		
     		break;
     		//Caso trineo
     	case Trineo:
