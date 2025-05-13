@@ -18,6 +18,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
@@ -32,6 +33,15 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
+import javafx.util.Duration;
+
+import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.stage.Popup;
+import javafx.stage.Stage;
+import javafx.stage.Window;
+import javafx.scene.text.Font;
 
 public class PantallaJuegoController {
 	
@@ -62,6 +72,30 @@ public class PantallaJuegoController {
     @FXML private Circle P2;
     @FXML private Circle P3;
     @FXML private Circle P4;
+    
+    private Popup popup;
+    
+    // Llamar esto desde cualquier método para mostrar el mensaje
+    public void mostrarPopup(String mensaje) {
+        Platform.runLater(() -> {
+            if (popup != null && popup.isShowing()) {
+                popup.hide();
+            }
+
+            Label label = new Label(mensaje);
+            label.setStyle("-fx-background-color: rgba(0,0,0,0.75); -fx-text-fill: white; -fx-padding: 10px; -fx-background-radius: 10;");
+            label.setFont(Font.font(20));
+            StackPane content = new StackPane(label);
+            content.setStyle("-fx-background-radius: 10;");
+            popup = new Popup();
+            popup.getContent().add(content);
+            popup.setAutoHide(true);
+
+            // Obtener la ventana desde cualquier nodo
+            Window window = dado.getScene().getWindow(); // usa cualquier nodo del FXML con fx:id
+            popup.show(window, window.getX() + 500, window.getY() + 600); // Ajusta posición si hace falta
+        });
+    }
     
     Random rn = new Random();
     
@@ -132,10 +166,10 @@ public class PantallaJuegoController {
         
         //añadir la lista de pinguinos
         //pingus = Pinguino.getListaPinguinos();
-        pingus.add(new Pinguino(1, "Toñin", 0, 0, 0, 0, 0));
-        pingus.add(new Pinguino(2, "Juan", 0, 0, 0, 0, 0));
-        pingus.add(new Pinguino(3, "Ruperto", 0, 0, 0, 0, 0));
-        pingus.add(new Pinguino(4, "Alfred", 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(1, "Azul", 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(2, "Rojo", 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(3, "Verde", 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(4, "Amarillo", 0, 0, 0, 0, 0));
         
         handleNewGame();
     }
@@ -165,7 +199,11 @@ public class PantallaJuegoController {
     
     //método para avanzar turno
     private void siguienteTurno() {
+    	//mover turno
     	turno = (turno + 1) % pingus.size();
+    	Pinguino pingu = pingus.get(turno);
+    	//alerta
+    	mostrarPopup("turno del pingüino: " + pingu.getNombre());
     }
     
     //método para actualizar el inventario
@@ -250,10 +288,12 @@ public class PantallaJuegoController {
     			if(rn.nextBoolean()) {
         			if(cantidadNieve.get() >= 6) { //comprobar maximos
         				cantidadNieve.set(6);
+        				pingu.setBolasNieve(6);
         				eventos.setText("Ya tienes el maximo de Nieve possible " + cantidadNieve.get());
         			}else { //si no supera el límite
         				int nieve = rn.nextInt(3) + 1;
             			cantidadNieve.set(cantidadNieve.get() + nieve);
+            			pingu.setBolasNieve(pingu.getBolasNieve() + nieve);
             			eventos.setText("Has conseguido " + nieve + " Bolas de Nieve!!!");
         			}
         		}else {
@@ -261,6 +301,7 @@ public class PantallaJuegoController {
         				eventos.setText("Ya tienes el maximo de peces " + cantidadPeces.get());
         			}else { //en caso de no superar maximos
         				cantidadPeces.set(cantidadPeces.get() + 1);
+        				pingu.setPescado(pingu.getPescado()+1);
             			eventos.setText("Has conseguido 1 Pez!!!");
         			}
         		}
@@ -272,6 +313,7 @@ public class PantallaJuegoController {
         				eventos.setText("Ya tienes el máximo de dados lentos " + cantidadLento.get());
         			}else { //si no supera el límite
             			cantidadLento.set(cantidadLento.get() + 1);
+            			pingu.setDadoLento(pingu.getDadoLento()+1);
             			eventos.setText("Has conseguido 1 dado lento");
         			}
         		}else {
@@ -282,6 +324,7 @@ public class PantallaJuegoController {
             				eventos.setText("Ya tienes el maximo de dados rapidos");
             			}else { //en caso de no superar maximos
             				cantidadRapido.set(cantidadRapido.get() +1);
+            				pingu.setDadoRapido(pingu.getDadoRapido()+1);
                 			eventos.setText("Has conseguido 1 dado rápido!!!");
             			}
 					} else {
@@ -291,6 +334,7 @@ public class PantallaJuegoController {
 	        				eventos.setText("Ya tienes el máximo de dados lentos " + cantidadLento.get());
 	        			}else { //si no supera el límite
 	            			cantidadLento.set(cantidadLento.get() + 1);
+	            			pingu.setDadoLento(pingu.getDadoLento()+1);
 	            			eventos.setText("Has conseguido 1 dado lento");
 	        			}
 					}
@@ -331,6 +375,8 @@ public class PantallaJuegoController {
     	}
     	//saltar turno al acabar de verificar la casilla
     	siguienteTurno();
+    	//actualizar el inventario según el pingu que toca
+    	actualizarInventario();
     }
     //método para encontrar al siguiente trieno
     private int encontrarSiguienteTrineo(int posActual) {
