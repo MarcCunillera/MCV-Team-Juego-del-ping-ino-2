@@ -120,6 +120,7 @@ public class PantallaJuegoController {
 
     @FXML
     private void initialize() throws SQLException {
+    
         con = bbdd.conectarBaseDatos(); // Aquí inicializas la conexión
         eventos.setText("¡El juego ha comenzado!");
         peces_t.textProperty().bind(Bindings.concat("Peces: ", cantidadPeces.asString()));
@@ -131,7 +132,7 @@ public class PantallaJuegoController {
         pingus.add(new Pinguino(3, "Ruperto", 0, 0, 0, 0, 0, 0));
         pingus.add(new Pinguino(4, "Alfred", 0, 0, 0, 0, 0, 0));
         
-        iniciarTablero();
+        handleNewGame();
     }
     
     //inicializar tablero
@@ -148,8 +149,10 @@ public class PantallaJuegoController {
     	tableroCasillas[0] = TipoCasilla.Normal;
     	tableroCasillas[49] = TipoCasilla.Meta;
     	
+
+    	
     	//imagenes
-    	mostrarImagenesAgujero();
+    	mostrarImgAgujero();
     	mostrarImagenesInterrogante();
     	mostrarImagenesOso();
     	mostrarImagenesTrineo();
@@ -190,7 +193,7 @@ public class PantallaJuegoController {
     	switch(casilla) {
     	//caso del oso
     	case Oso:
-    		if (cantidadPeces.get() > 0) {
+    		if (cantidadPeces.get() > 2) {
     			Platform.runLater(() -> {
                     Alert alert = new Alert(AlertType.CONFIRMATION);
                     alert.setTitle("Alerta! oso a la vista");
@@ -203,8 +206,8 @@ public class PantallaJuegoController {
                     
                     Optional<ButtonType> result = alert.showAndWait();
                     if (result.isPresent() && result.get() == siELec) {
-                        cantidadPeces.set(cantidadPeces.get() - 1);
-                        eventos.setText("Has sobornado al oso con 1 pez.");
+                        cantidadPeces.set(cantidadPeces.get() - 2);
+                        eventos.setText("Has sobornado al oso con 2 pezes");
                     } else {
                         //volver al inicio
                     	alInicio();
@@ -235,23 +238,58 @@ public class PantallaJuegoController {
     		break;
     		//caso de interrogante
     	case Interrogante:
-    		if(rn.nextBoolean()) {
-    			if(cantidadNieve.get() >= 6) { //COMPROBAR QUE NO SUPERE EL MAXIMO DE BOLAS DE NIEVE
-    				cantidadNieve.set(6);
-    				eventos.setText("Ya tienes el maximo de Nieve possible " + cantidadNieve.get());
-    			}else { //EN CASO DE QUE NO SUPERE EL LIMITE
-    				int nieve = rn.nextInt(3) + 1;
-        			cantidadNieve.set(cantidadNieve.get() + nieve);
-        			eventos.setText("Has conseguido " + nieve + " Bolas de Nieve!!!");
-    			}
-    		}else {
-    			if(cantidadPeces.get() >= 2 ) { //COMPROBAR QUE NO TENGA MAS DE 2 PECES
-    				eventos.setText("Ya tienes el maximo de peces " + cantidadPeces.get());
-    			}else { //EN CASO DE QUE TENGA MAS DE 2 PECES
-    				cantidadPeces.set(cantidadPeces.get() + 1);
-        			eventos.setText("Has conseguido 1 Pez!!!");
-    			}
+    		int elec = rn.nextInt(2) +1;
+    		if (elec == 1) {
+    			if(rn.nextBoolean()) {
+        			if(cantidadNieve.get() >= 6) { //comprobar maximos
+        				cantidadNieve.set(6);
+        				eventos.setText("Ya tienes el maximo de Nieve possible " + cantidadNieve.get());
+        			}else { //si no supera el límite
+        				int nieve = rn.nextInt(3) + 1;
+            			cantidadNieve.set(cantidadNieve.get() + nieve);
+            			eventos.setText("Has conseguido " + nieve + " Bolas de Nieve!!!");
+        			}
+        		}else {
+        			if(cantidadPeces.get() >= 5 ) { //comprobar maximos
+        				eventos.setText("Ya tienes el maximo de peces " + cantidadPeces.get());
+        			}else { //en caso de no superar maximos
+        				cantidadPeces.set(cantidadPeces.get() + 1);
+            			eventos.setText("Has conseguido 1 Pez!!!");
+        			}
+        		}
+    		} else {
+    			if(rn.nextBoolean()) {
+    				//dado lento
+        			if(pingu.getDadoLento() >= 4) { //comprobar maximos
+        				pingu.setDadoLento(4);
+        				eventos.setText("Ya tienes el máximo de dados lentos " + pingu.getDadoLento());
+        			}else { //si no supera el límite
+            			pingu.setDadoLento(pingu.getDadoLento() + 1);
+            			eventos.setText("Has conseguido 1 dado lento");
+        			}
+        		}else {
+        			//dado rápido
+        			int prob = rn.nextInt(4) +1;
+        			if (prob == 1) {
+        				if(pingu.getDadoRapido() >= 4) { //comprobar maximos
+            				eventos.setText("Ya tienes el maximo de dados rapidos");
+            			}else { //en caso de no superar maximos
+            				pingu.setDadoRapido(pingu.getDadoRapido() +1);
+                			eventos.setText("Has conseguido 1 dado rápido!!!");
+            			}
+					} else {
+						//dado lento
+	        			if(pingu.getDadoLento() >= 4) { //comprobar maximos
+	        				pingu.setDadoLento(4);
+	        				eventos.setText("Ya tienes el máximo de dados lentos " + pingu.getDadoLento());
+	        			}else { //si no supera el límite
+	            			pingu.setDadoLento(pingu.getDadoLento() + 1);
+	            			eventos.setText("Has conseguido 1 dado lento");
+	        			}
+					}
+        		}
     		}
+    		
     		break;
     		//Caso trineo
     	case Trineo:
@@ -269,7 +307,7 @@ public class PantallaJuegoController {
             //en caso de caer a la casilla del final
     	case Meta:
     		Alert alert = new Alert(AlertType.INFORMATION);
-    		alert.setTitle("El pinguino: " + pingu.getID() + " ha llegado a la meta!!");
+    		alert.setTitle("El pinguino: " + pingu.getNombre() + " ha llegado a la meta!!");
     		alert.setHeaderText("El juego termina");
     		alert.showAndWait();
     		
@@ -312,7 +350,26 @@ public class PantallaJuegoController {
         GridPane.setRowIndex(pinguCircle, 0);
         GridPane.setColumnIndex(pinguCircle, 0);
         
-        eventos.setText("Un oso te ha atrapado y vuelves al inicio :(");
+        eventos.setText("Te ha atrapado un oso, al inicio ;(");
+    }
+    
+    private void alInicioNew() {
+    	turno = 0;
+    	for (Pinguino pinguino : pingus) {
+    		Circle pinguCircle = getPinguinCircle(turno);
+    		turno++;
+    		pinguino.setPosicion(0);
+            GridPane.setRowIndex(pinguCircle, 0);
+            GridPane.setColumnIndex(pinguCircle, 0);
+		}
+    	
+    	turno = 0;
+    	dado.setDisable(false);
+		rapido.setDisable(false);
+		lento.setDisable(false);
+		peces.setDisable(false);
+		nieve.setDisable(false);
+    	
     }
 
     // Button and menu actions
@@ -350,27 +407,89 @@ public class PantallaJuegoController {
 
                 // Crear la participación en la partida
                 bbdd.crearParticipacion(con, idPartida, idJugador, posicion, dadoLento, dadoRapido, peces, bolasNieve);
+                //iniciar tablero nuevo
+                
+                
             }
 
         } catch (Exception e) {
             e.printStackTrace();
             eventos.setText("Error al crear nueva partida.");
         }
+        alInicioNew();
+        iniciarTablero();
     }
 
+
+    
     @FXML
-    public void handleSaveGame() throws SQLException {
-        int idPartida = bbdd.crearNuevaPartida(con); // Crea y devuelve el ID
-        eventos.setText("ID de partida generado: " + idPartida);
+    public void handleSaveGame() {
+        // Mostrar alerta de "guardando" antes de comenzar
+        Alert savingAlert = new Alert(AlertType.INFORMATION);
+        savingAlert.setTitle("Guardando partida");
+        savingAlert.setHeaderText(null);
+        savingAlert.setContentText("Guardando el estado del juego...");
+        savingAlert.show();
 
-        Integer[] casillasInt = obtenerEstadoCasillas();  // Supone que devuelve Integer[]
-        String[] casillasStr = new String[casillasInt.length];
+        // Ejecutar en segundo plano
+        new Thread(() -> {
+            try {
+                // 1. Obtener estado actual del tablero
+                Integer[] estadoCasillas = new Integer[50];
+                for (int i = 0; i < tableroCasillas.length; i++) {
+                    estadoCasillas[i] = tableroCasillas[i].ordinal();
+                }
 
-        for (int i = 0; i < casillasInt.length; i++) {
-            casillasStr[i] = casillasInt[i] != null ? casillasInt[i].toString() : null;
+                // 2. Actualizar partida en BD
+                bbdd.actualizarPartida(con, idPartida, "EN CURSO", estadoCasillas);
+
+                // 3. Actualizar participaciones
+                for (Pinguino pingu : pingus) {
+                    int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
+                    if (idJugador == -1) {
+                        bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd");
+                        idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
+                    }
+                    
+                    bbdd.actualizarParticipacion(
+                        con, idPartida, idJugador, 
+                        pingu.getPosicion(), pingu.getDadoLento(), 
+                        pingu.getDadoRapido(), pingu.getPescado(), 
+                        pingu.getBolasNieve()
+                    );
+                }
+
+                // Mostrar éxito en el hilo de JavaFX
+                Platform.runLater(() -> {
+                    savingAlert.close();
+                    eventos.setText("Partida guardada correctamente (ID: " + idPartida + ")");
+                    new Alert(AlertType.INFORMATION, "Juego guardado exitosamente!").show();
+                });
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    savingAlert.close();
+                    new Alert(AlertType.ERROR, "Error al guardar: " + e.getMessage()).show();
+                    eventos.setText("Error al guardar la partida");
+                });
+            }
+        }).start();
+    }
+    
+    //método para obtener el id de la partida actual
+    public static int obtenerIdPartidaActual(Connection con) throws SQLException {
+        String sql = "SELECT ID_Partida FROM Partidas WHERE Estado = 'EN CURSO' ORDER BY ID_Partida DESC FETCH FIRST 1 ROWS ONLY";
+        
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            if (rs.next()) {
+                return rs.getInt("ID_Partida");
+            } else {
+                throw new SQLException("No se encontró ninguna partida activa (EN CURSO).");
+            }
         }
-
-        bbdd.insertarPartida(con, idPartida, "EN CURSO", casillasStr);
     }
 
 
@@ -651,7 +770,7 @@ public class PantallaJuegoController {
     
     
     //imagen agujero
-    private void mostrarImagenesAgujero() {
+    private void mostrarImgAgujero() {
     	for(int i = 0; i < tableroCasillas.length; i++) {
     		if(tableroCasillas[i] == TipoCasilla.Agujero) {
     			int row = i / COLUMNS;
@@ -723,4 +842,3 @@ public class PantallaJuegoController {
     }
     
 }
-
