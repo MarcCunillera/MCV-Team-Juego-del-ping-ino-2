@@ -84,49 +84,25 @@ public class Pinguino extends Usuarios{
         return resultado;
     }
     
-    //método para verificar si los dados especiales existen
-    private boolean dadoExiste(int dadoSeleccionado) {
-        if (dadoSeleccionado == 0) return true;
-        for (ObjetosInventario obj : inventario.getInventario()) {
-            if (obj.getIDobjeto() == dadoSeleccionado && obj.getCantidad() > 0) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
     //método para tirar dado lento
     public int tirarDadoRapido() {
-    	dadoSeleccionado = 3; //revisar
     	Random random = new Random();
         int resultado = 0;
-
-        if (!dadoExiste(dadoSeleccionado)) {
-            System.out.println("Dado no encontrado, tirando dado normal...");
-            resultado = random.nextInt(6) + 1;
-            return resultado;
-        } else {
-        	resultado = random.nextInt(6) +1;
-        	resultado = resultado + 4;
-        	inventario.eliminarObjeto(3);
-        }
+        resultado = random.nextInt(6) +1;
+        resultado = resultado + 4;
+        inventario.eliminarObjeto(3);
+        
         return resultado;
     }
     
     //método para tirar dado rápido
     public int tirarDadoLento() {
-    	dadoSeleccionado = 4; //revisar
     	Random random = new Random();
         int resultado = 0;
 
-        if (!dadoExiste(dadoSeleccionado)) {
-            System.out.println("Dado no encontrado, tirando dado normal...");
-            resultado = random.nextInt(6) + 1;
-            return resultado;
-        } else {
-        	resultado = random.nextInt(3) + 1;
-        	inventario.eliminarObjeto(4);
-        }
+        resultado = random.nextInt(3) + 1;
+        inventario.eliminarObjeto(4);
+
         return resultado;
     }
     

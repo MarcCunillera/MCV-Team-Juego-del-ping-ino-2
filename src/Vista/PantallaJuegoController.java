@@ -68,7 +68,7 @@ public class PantallaJuegoController {
     public enum TipoCasilla {
     	Normal,
     	Agujero,
-    	Oso,
+    	Oso, 
     	Trineo,
     	Interrogante,
     	Meta
@@ -80,6 +80,8 @@ public class PantallaJuegoController {
     private TipoCasilla[] tableroCasillas = new TipoCasilla[numCasillas]; //generar las casillas
     private IntegerProperty cantidadPeces = new SimpleIntegerProperty();
     private IntegerProperty cantidadNieve = new SimpleIntegerProperty();
+    private IntegerProperty cantidadLento = new SimpleIntegerProperty();
+    private IntegerProperty cantidadRapido = new SimpleIntegerProperty();
     
     //metodo para tomar el id de casilla
     public Integer[] getCasillasId() {
@@ -125,6 +127,9 @@ public class PantallaJuegoController {
         eventos.setText("¡El juego ha comenzado!");
         peces_t.textProperty().bind(Bindings.concat("Peces: ", cantidadPeces.asString()));
         nieve_t.textProperty().bind(Bindings.concat("Bolas de nieve: ", cantidadNieve.asString()));
+        rapido_t.textProperty().bind(Bindings.concat("Dados rápidos: ", cantidadRapido.asString()));
+        lento_t.textProperty().bind(Bindings.concat("Dados lentos: ", cantidadLento.asString()));
+        
         //añadir la lista de pinguinos
         //pingus = Pinguino.getListaPinguinos();
         pingus.add(new Pinguino(1, "Toñin", 0, 0, 0, 0, 0, 0));
@@ -168,6 +173,8 @@ public class PantallaJuegoController {
     	Pinguino pingu = pingus.get(turno);
     	cantidadPeces.set(pingu.getPescado());
     	cantidadNieve.set(pingu.getBolasNieve());
+    	cantidadLento.set(pingu.getDadoLento());
+    	cantidadRapido.set(pingu.getDadoRapido());
     }
     
     //metodo para colocar las casillas especiales
@@ -260,30 +267,30 @@ public class PantallaJuegoController {
     		} else {
     			if(rn.nextBoolean()) {
     				//dado lento
-        			if(pingu.getDadoLento() >= 4) { //comprobar maximos
-        				pingu.setDadoLento(4);
-        				eventos.setText("Ya tienes el máximo de dados lentos " + pingu.getDadoLento());
+        			if(cantidadLento.get() >= 4) { //comprobar maximos
+        				cantidadLento.set(4);
+        				eventos.setText("Ya tienes el máximo de dados lentos " + cantidadLento.get());
         			}else { //si no supera el límite
-            			pingu.setDadoLento(pingu.getDadoLento() + 1);
+            			cantidadLento.set(cantidadLento.get() + 1);
             			eventos.setText("Has conseguido 1 dado lento");
         			}
         		}else {
         			//dado rápido
         			int prob = rn.nextInt(4) +1;
         			if (prob == 1) {
-        				if(pingu.getDadoRapido() >= 4) { //comprobar maximos
+        				if(cantidadRapido.get() >= 4) { //comprobar maximos
             				eventos.setText("Ya tienes el maximo de dados rapidos");
             			}else { //en caso de no superar maximos
-            				pingu.setDadoRapido(pingu.getDadoRapido() +1);
+            				cantidadRapido.set(cantidadRapido.get() +1);
                 			eventos.setText("Has conseguido 1 dado rápido!!!");
             			}
 					} else {
 						//dado lento
-	        			if(pingu.getDadoLento() >= 4) { //comprobar maximos
-	        				pingu.setDadoLento(4);
-	        				eventos.setText("Ya tienes el máximo de dados lentos " + pingu.getDadoLento());
+	        			if(cantidadLento.get() >= 4) { //comprobar maximos
+	        				cantidadLento.set(4);
+	        				eventos.setText("Ya tienes el máximo de dados lentos " + cantidadLento.get());
 	        			}else { //si no supera el límite
-	            			pingu.setDadoLento(pingu.getDadoLento() + 1);
+	            			cantidadLento.set(cantidadLento.get() + 1);
 	            			eventos.setText("Has conseguido 1 dado lento");
 	        			}
 					}
@@ -620,19 +627,23 @@ public class PantallaJuegoController {
         // Si tienes una tabla en la base de datos que guarda la cantidad de estos recursos, 
         // la consulta podría ser algo como esto:
 
-        String query = "SELECT cantidad_peces, cantidad_nieve FROM recursos WHERE id_partida = ?";
+        String query = "SELECT PECES, BOLAS_NIEVE, DADO_LENTO, DADO_RAPIDO FROM PARTICIPACIONES WHERE id_partida = ?";
         
         try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setInt(1, idPartida);  // Usamos el idPartida para filtrar los recursos específicos
             
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    int cantidadPecesRecuperados = rs.getInt("cantidad_peces");
-                    int cantidadNieveRecuperada = rs.getInt("cantidad_nieve");
+                    int cantidadPecesRecuperados = rs.getInt("PECES");
+                    int cantidadNieveRecuperada = rs.getInt("BOLAS_NIEVE");
+                    int cantidadRapidoRecuperado = rs.getInt("DADO_RAPIDO");
+                    int cantidadLentoRecuperado = rs.getInt("DADO_LENTO");
                     
                     // Actualizamos las propiedades
                     cantidadPeces.set(cantidadPecesRecuperados);
                     cantidadNieve.set(cantidadNieveRecuperada);
+                    cantidadLento.set(cantidadLentoRecuperado);
+                    cantidadRapido.set(cantidadRapidoRecuperado);
                     
                     // Si hay algún componente en la UI que depende de estos valores, 
                     // los puedes actualizar aquí también.
@@ -716,20 +727,22 @@ public class PantallaJuegoController {
         System.out.println("Fast.");
         // TODO
         Pinguino pinguActual = pingus.get(turno);
-        actualizarInventario();
-        //llamamos al metodo tirar dado rápido
-        int resulRapido = pinguActual.tirarDadoRapido();
+        int resul;
         
-        //mostrar texto
-        eventos.setText("Resultado dado Rapido" + resulRapido);
-        
+        if(cantidadLento.get() == 0) {
+        	resul = pinguActual.tirarDadoNormal();
+        } else {
+        	actualizarInventario();
+            //llamar a la función para tirar dado lento
+            resul = pinguActual.tirarDadoRapido();
+            eventos.setText("Resultado dado Lento" + resul);
+        }
         //mover el pinguino
-        if((pinguActual.getPosicion() + resulRapido) > 49) { //si la posicion a cambiar es superior al limite del tablero
+        if((pinguActual.getPosicion() + resul) > 49) { //si la posicion a cambiar es superior al limite del tablero
         	pinguActual.setPosicion(49);
         } else {
-        	pinguActual.setPosicion(pinguActual.getPosicion() + resulRapido);
+        	pinguActual.setPosicion(pinguActual.getPosicion() + resul);
         }
-        
         updatePenguinPosition();
     }
 
@@ -738,18 +751,21 @@ public class PantallaJuegoController {
         System.out.println("Slow.");
         // TODO
         Pinguino pinguActual = pingus.get(turno);
-        actualizarInventario();
+        int resul;
         
-        //llamar a la función para tirar dado lento
-        int resulLento = pinguActual.tirarDadoLento();
-        eventos.setText("Resultado dado Lento" + resulLento);
-        
-        //mover al pinguino
+        if(cantidadLento.get() == 0) {
+        	resul = pinguActual.tirarDadoNormal();
+        } else {
+        	actualizarInventario();
+            //llamar a la función para tirar dado lento
+            resul = pinguActual.tirarDadoLento();
+            eventos.setText("Resultado dado Lento" + resul);
+        }
         //mover el pinguino
-        if((pinguActual.getPosicion() + resulLento) > 49) { //si la posicion a cambiar es superior al limite del tablero
+        if((pinguActual.getPosicion() + resul) > 49) { //si la posicion a cambiar es superior al limite del tablero
         	pinguActual.setPosicion(49);
         } else {
-        	pinguActual.setPosicion(pinguActual.getPosicion() + resulLento);
+        	pinguActual.setPosicion(pinguActual.getPosicion() + resul);
         }
         updatePenguinPosition();
     }	

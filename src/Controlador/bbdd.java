@@ -320,7 +320,7 @@ public class bbdd {
         return casillas;  // Devolvemos la lista de casillas
     }
 
-    
+    //restaurar la lista de pinguinos
     public static List<Pinguino> obtenerPinguinosDePartida(Connection con, int idPartida) {
         List<Pinguino> pinguinos = new ArrayList<>();
         String query = "SELECT id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado FROM pinguinos WHERE id_partida = ?";
