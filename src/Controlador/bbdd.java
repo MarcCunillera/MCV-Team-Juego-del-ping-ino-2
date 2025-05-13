@@ -323,21 +323,20 @@ public class bbdd {
     //restaurar la lista de pinguinos
     public static List<Pinguino> obtenerPinguinosDePartida(Connection con, int idPartida) {
         List<Pinguino> pinguinos = new ArrayList<>();
-        String query = "SELECT id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado FROM pinguinos WHERE id_partida = ?";
+        String query = "SELECT j.id_jugador, j.nickname, p.Jugador_pos, p.dado_Lento, p.dado_Rapido, p.peces, p.Bolas_nieve FROM Jugadores j, Participaciones p WHERE j.id_jugador = p.id_jugador AND p.id_partida";
         
         try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setInt(1, idPartida);  // Establecemos el ID de la partida como parámetro
             
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    int id = rs.getInt("id");
-                    String nombre = rs.getString("nombre");
-                    int posicion = rs.getInt("posicion");
-                    int dadoNormal = rs.getInt("dadoNormal");
-                    int dadoLento = rs.getInt("dadoLento");
-                    int dadoRapido = rs.getInt("dadoRapido");
-                    int bolasNieve = rs.getInt("bolasNieve");
-                    int pescado = rs.getInt("pescado");
+                    int id = rs.getInt("id_jugador");
+                    String nombre = rs.getString("nickname");
+                    int posicion = rs.getInt("Jugador_pos");
+                    int dadoLento = rs.getInt("dado_Lento");
+                    int dadoRapido = rs.getInt("dado_Rapido");
+                    int pescado = rs.getInt("peces");
+                    int bolasNieve = rs.getInt("Bolas_nieve");
                     
                     // Crear el objeto Pinguino con los valores obtenidos
                     Pinguino pinguino = new Pinguino(id, nombre, posicion, dadoLento, dadoRapido, bolasNieve, pescado);
