@@ -56,8 +56,8 @@ public class Eventos {
         
         // Verificar si tiene un pez
         for (ObjetosInventario obj : inventario.getInventario()) {
-            if (obj.getIDobjeto() == 1 && obj.getCantidad() > 0) { // Pez
-                inventario.eliminarObjeto(1);  // Eliminar un pez
+            if (obj.getIDobjeto() == 2 && obj.getCantidad() > 0) { // Pez
+                inventario.eliminarObjeto(2);  // Eliminar un pez
                 System.out.println("Has sobornado al oso con un pez 🦈 ¡Sigues jugando!");
                 return true;
             }
