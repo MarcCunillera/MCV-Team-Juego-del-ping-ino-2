@@ -202,6 +202,8 @@ public class PantallaJuegoController {
     	//mover turno
     	turno = (turno + 1) % pingus.size();
     	Pinguino pingu = pingus.get(turno);
+    	actualizarInventario();
+    	
     	//alerta
     	mostrarPopup("turno del pingüino: " + pingu.getNombre());
     }
@@ -375,8 +377,6 @@ public class PantallaJuegoController {
     	}
     	//saltar turno al acabar de verificar la casilla
     	siguienteTurno();
-    	//actualizar el inventario según el pingu que toca
-    	actualizarInventario();
     }
     //método para encontrar al siguiente trieno
     private int encontrarSiguienteTrineo(int posActual) {
@@ -751,10 +751,9 @@ public class PantallaJuegoController {
     @FXML
     private void handleDado(ActionEvent event) {
         Pinguino pinguActual = pingus.get(turno);
-        actualizarInventario();
         int resulDado = pinguActual.tirarDadoNormal();
         
-        dadoResultText.setText("Ha salido" + resulDado);
+        dadoResultText.setText("Ha salido: " + resulDado);
         
         //mover el pinguino
         if((pinguActual.getPosicion() + resulDado) > 49) { //si la posicion a cambiar es superior al limite del tablero
@@ -773,14 +772,15 @@ public class PantallaJuegoController {
         // TODO
         Pinguino pinguActual = pingus.get(turno);
         int resul;
-        actualizarInventario();
         
         if(cantidadLento.get() == 0) {
         	resul = pinguActual.tirarDadoNormal();
+        	dadoResultText.setText("Resultado dado Normal: " + resul);
         } else {
             //llamar a la función para tirar dado lento
             resul = pinguActual.tirarDadoRapido();
-            eventos.setText("Resultado dado Lento" + resul);
+            dadoResultText.setText("Resultado dado Rápido: " + resul);
+            pinguActual.setDadoRapido(pinguActual.getDadoRapido()-1);
         }
         //mover el pinguino
         if((pinguActual.getPosicion() + resul) > 49) { //si la posicion a cambiar es superior al limite del tablero
@@ -797,14 +797,15 @@ public class PantallaJuegoController {
         // TODO
         Pinguino pinguActual = pingus.get(turno);
         int resul;
-        actualizarInventario();
         
         if(cantidadLento.get() == 0) {
         	resul = pinguActual.tirarDadoNormal();
+        	dadoResultText.setText("Resultado dado Normal: " + resul);
         } else {
             //llamar a la función para tirar dado lento
             resul = pinguActual.tirarDadoLento();
-            eventos.setText("Resultado dado Lento" + resul);
+            pinguActual.setDadoLento(pinguActual.getDadoLento() -1);
+            dadoResultText.setText("Resultado dado Lento: " + resul);
         }
         //mover el pinguino
         if((pinguActual.getPosicion() + resul) > 49) { //si la posicion a cambiar es superior al limite del tablero
