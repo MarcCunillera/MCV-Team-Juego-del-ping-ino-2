@@ -8,7 +8,6 @@ public class Pinguino extends Usuarios{
     private int posicion;
     private Inventario inventario;
     private int dadoSeleccionado;
-    private int dadoNormal;
     private int dadoLento;
     private int dadoRapido;
     private int bolasNieve;
@@ -20,14 +19,6 @@ public class Pinguino extends Usuarios{
 
 	public void setDadoSeleccionado(int dadoSeleccionado) {
 		this.dadoSeleccionado = dadoSeleccionado;
-	}
-
-	public int getDadoNormal() {
-		return dadoNormal;
-	}
-
-	public void setDadoNormal(int dadoNormal) {
-		this.dadoNormal = dadoNormal;
 	}
 
 	public int getDadoLento() {
