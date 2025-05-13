@@ -64,11 +64,10 @@ public class Pinguino extends Usuarios{
 
 	public static ArrayList<Pinguino> ListaPinguinos = new ArrayList<>();
 
-    public Pinguino(int id, String nombre, int posicion, int dadoNormal, int dadoLento, int dadoRapido, int bolasNieve, int pescado) {
+    public Pinguino(int id, String nombre, int posicion, int dadoLento, int dadoRapido, int bolasNieve, int pescado) {
         super(id);
         this.nombre = nombre;
         this.posicion = posicion;
-        this.dadoNormal = dadoNormal;
         this.dadoLento = dadoLento;
         this.dadoRapido = dadoRapido;
         this.bolasNieve = bolasNieve;
@@ -90,7 +89,6 @@ public class Pinguino extends Usuarios{
         int resultado = 0;
         resultado = random.nextInt(6) +1;
         resultado = resultado + 4;
-        inventario.eliminarObjeto(3);
         
         return resultado;
     }
@@ -99,9 +97,7 @@ public class Pinguino extends Usuarios{
     public int tirarDadoLento() {
     	Random random = new Random();
         int resultado = 0;
-
         resultado = random.nextInt(3) + 1;
-        inventario.eliminarObjeto(4);
 
         return resultado;
     }

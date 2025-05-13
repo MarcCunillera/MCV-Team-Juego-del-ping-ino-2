@@ -132,10 +132,10 @@ public class PantallaJuegoController {
         
         //añadir la lista de pinguinos
         //pingus = Pinguino.getListaPinguinos();
-        pingus.add(new Pinguino(1, "Toñin", 0, 0, 0, 0, 0, 0));
-        pingus.add(new Pinguino(2, "Juan", 0, 0, 0, 0, 0, 0));
-        pingus.add(new Pinguino(3, "Ruperto", 0, 0, 0, 0, 0, 0));
-        pingus.add(new Pinguino(4, "Alfred", 0, 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(1, "Toñin", 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(2, "Juan", 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(3, "Ruperto", 0, 0, 0, 0, 0));
+        pingus.add(new Pinguino(4, "Alfred", 0, 0, 0, 0, 0));
         
         handleNewGame();
     }
@@ -609,7 +609,7 @@ public class PantallaJuegoController {
                         int pescado = rs.getInt("pescado");
 
                         // Crear el pingüino y añadirlo a la lista
-                        new Pinguino(id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado);
+                        new Pinguino(id, nombre, posicion, dadoLento, dadoRapido, bolasNieve, pescado);
                     }
                 }
             }
@@ -719,7 +719,6 @@ public class PantallaJuegoController {
         
         //Actualizar el tablero de forma visual
         updatePenguinPosition();
-        
     }
 
     @FXML
@@ -728,11 +727,11 @@ public class PantallaJuegoController {
         // TODO
         Pinguino pinguActual = pingus.get(turno);
         int resul;
+        actualizarInventario();
         
         if(cantidadLento.get() == 0) {
         	resul = pinguActual.tirarDadoNormal();
         } else {
-        	actualizarInventario();
             //llamar a la función para tirar dado lento
             resul = pinguActual.tirarDadoRapido();
             eventos.setText("Resultado dado Lento" + resul);
@@ -752,11 +751,11 @@ public class PantallaJuegoController {
         // TODO
         Pinguino pinguActual = pingus.get(turno);
         int resul;
+        actualizarInventario();
         
         if(cantidadLento.get() == 0) {
         	resul = pinguActual.tirarDadoNormal();
         } else {
-        	actualizarInventario();
             //llamar a la función para tirar dado lento
             resul = pinguActual.tirarDadoLento();
             eventos.setText("Resultado dado Lento" + resul);

@@ -340,7 +340,7 @@ public class bbdd {
                     int pescado = rs.getInt("pescado");
                     
                     // Crear el objeto Pinguino con los valores obtenidos
-                    Pinguino pinguino = new Pinguino(id, nombre, posicion, dadoNormal, dadoLento, dadoRapido, bolasNieve, pescado);
+                    Pinguino pinguino = new Pinguino(id, nombre, posicion, dadoLento, dadoRapido, bolasNieve, pescado);
                     pinguinos.add(pinguino);
                 }
             }
