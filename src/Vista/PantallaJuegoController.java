@@ -628,7 +628,7 @@ public class PantallaJuegoController {
     public void restaurarPinguinos() {
         try {
             // Recuperar los pingüinos de la base de datos usando el idPartida
-            String queryPinguinos = "SELECT id, nombre, posicion, dado_normal, dado_lento, dado_rapido, bolas_nieve, pescado FROM pinguinos WHERE id_partida = ?";
+            String queryPinguinos = "SELECT J.ID_JUGADOR, J.NICKNAME, P.JUGADOR_POS, P.dado_lento, P.dado_rapido, P.bolas_nieve, P.PECES FROM PARTICIPACIONES P, JUGADORES J WHERE P.ID_JUGADOR = J.ID_JUGADOR AND ID_PARTIDA = ?";
             try (PreparedStatement stmt = con.prepareStatement(queryPinguinos)) {
                 stmt.setInt(1, idPartida); // Usamos idPartida para filtrar los pingüinos
 
