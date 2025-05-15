@@ -254,6 +254,7 @@ public class PantallaJuegoController {
                     Optional<ButtonType> result = alert.showAndWait();
                     if (result.isPresent() && result.get() == siELec) {
                         cantidadPeces.set(cantidadPeces.get() - 2);
+                        pingu.setPescado(pingu.getPescado() - 2);
                         eventos.setText("Has sobornado al oso con 2 pezes");
                     } else {
                         //volver al inicio
