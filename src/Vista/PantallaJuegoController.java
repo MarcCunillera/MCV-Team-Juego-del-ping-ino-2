@@ -583,6 +583,7 @@ public class PantallaJuegoController {
                     // Restaurar tablero y pingüinos
                     restaurarTablero();
                     restaurarPinguinos();
+                    updateAllPenguinPosition();
                 } else {
                     eventos.setText("No se encontró la partida con ese número.");
                 }
@@ -648,6 +649,7 @@ public class PantallaJuegoController {
                 }
             }
             actualizarRecursos();
+            
             eventos.setText("Tablero restaurado exitosamente.");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -751,6 +753,24 @@ public class PantallaJuegoController {
         int posicion = pingu.getPosicion();
         efectoCasilla(posicion);
     }
+    
+    //update de todos los pinguinos del tablero al cargar juego
+    private void updateAllPenguinPosition(){
+    	int tourn = 0;
+    	for (int i = 0; i < 4; i++) {
+			Pinguino pingu = pingus.get(tourn);
+			Circle pinguCircle = getPinguinCircle(tourn);
+			
+			int row = pingu.getPosicion() / 5; //5 X 10 grid
+	        int col = pingu.getPosicion() % 5;
+	        
+	        GridPane.setRowIndex(pinguCircle, row);
+	        GridPane.setColumnIndex(pinguCircle, col);
+	        
+	        tourn++;
+		}
+    }
+    
     
     //update final en caso de caer en trampas
     private void finalUpdatePosition() {
