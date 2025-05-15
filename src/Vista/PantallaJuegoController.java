@@ -553,7 +553,7 @@ public class PantallaJuegoController {
         // Ejemplo de asignación: Casilla 1 = 'INICIO', Casilla 50 = 'META', etc.
         // Esto debe ser ajustado según cómo manejas las casillas en el juego
         for (int i = 0; i < 50; i++) {
-            casillas[i] = i + 1; //poner la lógica de asignación real
+            casillas[i] = i + 1; //sponer la lógica de asignación real
         }
         return casillas;
     }
@@ -624,9 +624,7 @@ public class PantallaJuegoController {
                     }
                 }
             }
-            
-            // Si tienes otros recursos como nieve y peces, actualízalos aquí si es necesario.
-            // actualizarRecursos(); // Descomentar si se necesita actualizar los recursos
+            actualizarRecursos();
 
             eventos.setText("Tablero restaurado exitosamente.");
         } catch (SQLException e) {
@@ -670,8 +668,6 @@ public class PantallaJuegoController {
     
     public void actualizarRecursos() {
         // Aquí podrías actualizar los recursos del juego, como los peces y la nieve
-        // Si tienes una tabla en la base de datos que guarda la cantidad de estos recursos, 
-        // la consulta podría ser algo como esto:
 
         String query = "SELECT PECES, BOLAS_NIEVE, DADO_LENTO, DADO_RAPIDO FROM PARTICIPACIONES WHERE id_partida = ?";
         
@@ -690,9 +686,6 @@ public class PantallaJuegoController {
                     cantidadNieve.set(cantidadNieveRecuperada);
                     cantidadLento.set(cantidadLentoRecuperado);
                     cantidadRapido.set(cantidadRapidoRecuperado);
-                    
-                    // Si hay algún componente en la UI que depende de estos valores, 
-                    // los puedes actualizar aquí también.
                 }
             }
         } catch (SQLException e) {
