@@ -240,7 +240,7 @@ public class PantallaJuegoController {
     	switch(casilla) {
     	//caso del oso
     	case Oso:
-    		if (cantidadPeces.get() > 2) {
+    		if (cantidadPeces.get() >= 2) {
     			Platform.runLater(() -> {
                     Alert alert = new Alert(AlertType.CONFIRMATION);
                     alert.setTitle("Alerta! oso a la vista");
