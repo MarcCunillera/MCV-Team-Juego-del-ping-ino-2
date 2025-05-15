@@ -287,60 +287,51 @@ public class PantallaJuegoController {
     	case Interrogante:
     		int elec = rn.nextInt(2) +1;
     		if (elec == 1) {
-    			if(rn.nextBoolean()) {
-        			if(cantidadNieve.get() >= 6) { //comprobar maximos
-        				cantidadNieve.set(6);
-        				pingu.setBolasNieve(6);
-        				eventos.setText("Ya tienes el maximo de Nieve possible " + cantidadNieve.get());
-        			}else { //si no supera el límite
-        				int nieve = rn.nextInt(3) + 1;
-            			cantidadNieve.set(cantidadNieve.get() + nieve);
-            			pingu.setBolasNieve(pingu.getBolasNieve() + nieve);
-            			eventos.setText("Has conseguido " + nieve + " Bolas de Nieve!!!");
-        			}
-        		}else {
-        			if(cantidadPeces.get() >= 5 ) { //comprobar maximos
-        				eventos.setText("Ya tienes el maximo de peces " + cantidadPeces.get());
-        			}else { //en caso de no superar maximos
-        				cantidadPeces.set(cantidadPeces.get() + 1);
-        				pingu.setPescado(pingu.getPescado()+1);
-            			eventos.setText("Has conseguido 1 Pez!!!");
-        			}
-        		}
+    		    if (rn.nextBoolean()) {
+    		        // Bolas de Nieve
+    		        if (cantidadNieve.get() >= 6) {
+    		            cantidadNieve.set(6);
+    		            pingu.setBolasNieve(6);
+    		            eventos.setText("Ya tienes el máximo de Nieve posible " + cantidadNieve.get());
+    		        } else {
+    		            int nieve = rn.nextInt(3) + 1;
+    		            cantidadNieve.set(cantidadNieve.get() + nieve);
+    		            pingu.setBolasNieve(pingu.getBolasNieve() + nieve);
+    		            eventos.setText("Has conseguido " + nieve + " Bolas de Nieve!!!");
+    		        }
+    		    } else {
+    		        // Peces
+    		        if (cantidadPeces.get() >= 5) {
+    		            eventos.setText("Ya tienes el máximo de peces " + cantidadPeces.get());
+    		        } else {
+    		            cantidadPeces.set(cantidadPeces.get() + 1);
+    		            pingu.setPescado(pingu.getPescado() + 1);
+    		            eventos.setText("Has conseguido 1 Pez!!!");
+    		        }
+    		    }
     		} else {
-    			if(rn.nextBoolean()) {
-    				//dado lento
-        			if(cantidadLento.get() >= 4) { //comprobar maximos
-        				cantidadLento.set(4);
-        				eventos.setText("Ya tienes el máximo de dados lentos " + cantidadLento.get());
-        			}else { //si no supera el límite
-            			cantidadLento.set(cantidadLento.get() + 1);
-            			pingu.setDadoLento(pingu.getDadoLento()+1);
-            			eventos.setText("Has conseguido 1 dado lento");
-        			}
-        		}else {
-        			//dado rápido
-        			int prob = rn.nextInt(4) +1;
-        			if (prob == 1) {
-        				if(cantidadRapido.get() >= 4) { //comprobar maximos
-            				eventos.setText("Ya tienes el maximo de dados rapidos");
-            			}else { //en caso de no superar maximos
-            				cantidadRapido.set(cantidadRapido.get() +1);
-            				pingu.setDadoRapido(pingu.getDadoRapido()+1);
-                			eventos.setText("Has conseguido 1 dado rápido!!!");
-            			}
-					} else {
-						//dado lento
-	        			if(cantidadLento.get() >= 4) { //comprobar maximos
-	        				cantidadLento.set(4);
-	        				eventos.setText("Ya tienes el máximo de dados lentos " + cantidadLento.get());
-	        			}else { //si no supera el límite
-	            			cantidadLento.set(cantidadLento.get() + 1);
-	            			pingu.setDadoLento(pingu.getDadoLento()+1);
-	            			eventos.setText("Has conseguido 1 dado lento");
-	        			}
-					}
-        		}
+    		    boolean dadoRapido = !rn.nextBoolean() && rn.nextInt(4) + 1 == 1;
+
+    		    if (dadoRapido) {
+    		        // Dado Rápido
+    		        if (cantidadRapido.get() >= 4) {
+    		            eventos.setText("Ya tienes el máximo de dados rápidos");
+    		        } else {
+    		            cantidadRapido.set(cantidadRapido.get() + 1);
+    		            pingu.setDadoRapido(pingu.getDadoRapido() + 1);
+    		            eventos.setText("Has conseguido 1 dado rápido!!!");
+    		        }
+    		    } else {
+    		        // Dado Lento
+    		        if (cantidadLento.get() >= 4) {
+    		            cantidadLento.set(4);
+    		            eventos.setText("Ya tienes el máximo de dados lentos " + cantidadLento.get());
+    		        } else {
+    		            cantidadLento.set(cantidadLento.get() + 1);
+    		            pingu.setDadoLento(pingu.getDadoLento() + 1);
+    		            eventos.setText("Has conseguido 1 dado lento");
+    		        }
+    		    }
     		}
     		
     		break;
