@@ -611,27 +611,45 @@ public class PantallaJuegoController {
 
             try (PreparedStatement stmt = con.prepareStatement(queryCasillas)) {
                 stmt.setInt(1, idPartida);
-
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        for (int i = 0; i < 50; i++) {
-                            // Las columnas se llaman ID_Casilla_1, ..., ID_Casilla_50
-                            String tipoCasilla = rs.getString("ID_Casilla_" + (i + 1));
+                        for (int i = 1; i <= 50; i++) {
+                            String columna = "ID_Casilla_" + i;
+                            String valor = rs.getString(columna);
 
-                            if (tipoCasilla != null) {
-                                TipoCasilla tipo = TipoCasilla.valueOf(tipoCasilla);
-                                tableroCasillas[i] = tipo;
-                            } else {
-                                tableroCasillas[i] = null; // o algún tipo por defecto
+                            if (valor == null || valor.isBlank()) {
+                                tableroCasillas[i - 1] = null; // o un valor por defecto
+                                continue;
                             }
+
+                            TipoCasilla tipo = null;
+
+                            // Intentar parsear el valor como número (índice)
+                            try {
+                                int index = Integer.parseInt(valor);
+                                // Si es un índice válido del enum
+                                if (index >= 0 && index < TipoCasilla.values().length) {
+                                    tipo = TipoCasilla.values()[index];
+                                } else {
+                                    System.err.println("Índice fuera de rango para casilla " + i + ": " + index);
+                                }
+                            } catch (NumberFormatException e) {
+                                // No es número, intentar parsear como nombre
+                                try {
+                                    tipo = TipoCasilla.valueOf(valor);
+                                } catch (IllegalArgumentException ex) {
+                                    System.err.println("Valor inválido para casilla " + i + ": " + valor);
+                                }
+                            }
+
+                            tableroCasillas[i - 1] = tipo;
                         }
                     }
                 }
             }
-
             actualizarRecursos();
             eventos.setText("Tablero restaurado exitosamente.");
-        } catch (SQLException | IllegalArgumentException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
             eventos.setText("Error al restaurar el tablero.");
         }
