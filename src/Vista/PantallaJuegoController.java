@@ -628,23 +628,22 @@ public class PantallaJuegoController {
     public void restaurarPinguinos() {
         try {
             // Recuperar los pingüinos de la base de datos usando el idPartida
-            String queryPinguinos = "SELECT id, nombre, posicion, dado_normal, dado_lento, dado_rapido, bolas_nieve, pescado FROM pinguinos WHERE id_partida = ?";
+            String queryPinguinos = "SELECT j.ID_Jugador, j.Nickname, p.Jugador_pos, p.dado_lento, p.dado_rapido, p.peces, p.bolas_nieve FROM Jugadores j, Participaciones p WHERE j.id_jugador = p.id_jugador AND id_partida = ?";
             try (PreparedStatement stmt = con.prepareStatement(queryPinguinos)) {
                 stmt.setInt(1, idPartida); // Usamos idPartida para filtrar los pingüinos
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        int id = rs.getInt("id");
-                        String nombre = rs.getString("nombre");
-                        int posicion = rs.getInt("posicion");
-                        int dadoNormal = rs.getInt("dado_normal");
+                        int id = rs.getInt("ID_Jugador");
+                        String nombre = rs.getString("Nickname");
+                        int posicion = rs.getInt("Jugador_pos");
                         int dadoLento = rs.getInt("dado_lento");
                         int dadoRapido = rs.getInt("dado_rapido");
+                        int pescado = rs.getInt("peces");
                         int bolasNieve = rs.getInt("bolas_nieve");
-                        int pescado = rs.getInt("pescado");
 
                         // Crear el pingüino y añadirlo a la lista
-                        new Pinguino(id, nombre, posicion, dadoLento, dadoRapido, bolasNieve, pescado);
+                        new Pinguino(id, nombre, posicion, dadoLento, dadoRapido, pescado, bolasNieve);
                     }
                 }
             }
