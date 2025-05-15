@@ -596,39 +596,54 @@ public class PantallaJuegoController {
 
     public void restaurarTablero() {
         try {
-            // Recuperar las casillas de la base de datos usando el idPartida
-            String queryCasillas = "SELECT casilla_id, tipo, posicion FROM casillas WHERE id_partida = ?";
+            String queryCasillas = "SELECT " +
+                    "ID_Casilla_1, ID_Casilla_2, ID_Casilla_3, ID_Casilla_4, ID_Casilla_5, " +
+                    "ID_Casilla_6, ID_Casilla_7, ID_Casilla_8, ID_Casilla_9, ID_Casilla_10, " +
+                    "ID_Casilla_11, ID_Casilla_12, ID_Casilla_13, ID_Casilla_14, ID_Casilla_15, " +
+                    "ID_Casilla_16, ID_Casilla_17, ID_Casilla_18, ID_Casilla_19, ID_Casilla_20, " +
+                    "ID_Casilla_21, ID_Casilla_22, ID_Casilla_23, ID_Casilla_24, ID_Casilla_25, " +
+                    "ID_Casilla_26, ID_Casilla_27, ID_Casilla_28, ID_Casilla_29, ID_Casilla_30, " +
+                    "ID_Casilla_31, ID_Casilla_32, ID_Casilla_33, ID_Casilla_34, ID_Casilla_35, " +
+                    "ID_Casilla_36, ID_Casilla_37, ID_Casilla_38, ID_Casilla_39, ID_Casilla_40, " +
+                    "ID_Casilla_41, ID_Casilla_42, ID_Casilla_43, ID_Casilla_44, ID_Casilla_45, " +
+                    "ID_Casilla_46, ID_Casilla_47, ID_Casilla_48, ID_Casilla_49, ID_Casilla_50 " +
+                    "FROM Partidas WHERE ID_Partida = ?";
+
             try (PreparedStatement stmt = con.prepareStatement(queryCasillas)) {
-                stmt.setInt(1, idPartida); // Usamos idPartida para filtrar las casillas
+                stmt.setInt(1, idPartida);
 
                 try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        int casillaId = rs.getInt("casilla_id");
-                        String tipoCasilla = rs.getString("tipo");
-                        int posicion = rs.getInt("posicion");
+                    if (rs.next()) {
+                        for (int i = 0; i < 50; i++) {
+                            // Las columnas se llaman ID_Casilla_1, ..., ID_Casilla_50
+                            String tipoCasilla = rs.getString("ID_Casilla_" + (i + 1));
 
-                        // Determinar el tipo de casilla
-                        TipoCasilla tipo = TipoCasilla.valueOf(tipoCasilla);
-
-                        // Actualizar la casilla en el tablero
-                        tableroCasillas[posicion] = tipo;
+                            if (tipoCasilla != null) {
+                                TipoCasilla tipo = TipoCasilla.valueOf(tipoCasilla);
+                                tableroCasillas[i] = tipo;
+                            } else {
+                                tableroCasillas[i] = null; // o algún tipo por defecto
+                            }
+                        }
                     }
                 }
             }
-            actualizarRecursos();
 
+            actualizarRecursos();
             eventos.setText("Tablero restaurado exitosamente.");
-        } catch (SQLException e) {
+        } catch (SQLException | IllegalArgumentException e) {
             e.printStackTrace();
             eventos.setText("Error al restaurar el tablero.");
         }
     }
 
 
+
     public void restaurarPinguinos() {
         try {
             // Recuperar los pingüinos de la base de datos usando el idPartida
             String queryPinguinos = "SELECT j.ID_Jugador, j.Nickname, p.Jugador_pos, p.dado_lento, p.dado_rapido, p.peces, p.bolas_nieve FROM Jugadores j, Participaciones p WHERE j.id_jugador = p.id_jugador AND id_partida = ?";
+
             try (PreparedStatement stmt = con.prepareStatement(queryPinguinos)) {
                 stmt.setInt(1, idPartida); // Usamos idPartida para filtrar los pingüinos
 
