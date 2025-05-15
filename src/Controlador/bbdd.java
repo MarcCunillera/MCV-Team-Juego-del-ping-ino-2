@@ -120,7 +120,7 @@ public class bbdd {
 
         try {
             String sql = "INSERT INTO Jugadores (ID_jugador, Nickname, Contrasena, N_partidas, Color) " +
-                         "VALUES (jugadores_seq.NEXTVAL, ?, ?, 0, ?)";
+                         "VALUES (JUGADORES_SEQ.NEXTVAL, ?, ?, 0, ?)";
             pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, nickname);
             pstmt.setString(2, contrasena);
@@ -136,7 +136,7 @@ public class bbdd {
 
     public static void insertarParticipacion(Connection con, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) throws SQLException {
         String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
-                     "VALUES (seq_participacion.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
+                     "VALUES (PARTICIPACIONES_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setInt(1, idPartida);
         ps.setInt(2, idJugador);
@@ -179,7 +179,7 @@ public class bbdd {
 
     	try {
     		String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
-    				"VALUES (PARTICIPACION_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
+    				"VALUES (PARTICIPACIONES_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
     		pstmt = conn.prepareStatement(sql);
     		pstmt.setInt(1, idPartida);
     		pstmt.setInt(2, idJugador);
