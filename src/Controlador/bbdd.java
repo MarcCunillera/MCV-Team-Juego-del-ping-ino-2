@@ -119,8 +119,8 @@ public class bbdd {
         }
 
         try {
-            String sql = "INSERT INTO Jugadores (ID_jugador, Nickname, Contrasena, N_partidas) " +
-                         "VALUES (jugadores_seq.NEXTVAL, ?, ?, 0)";
+            String sql = "INSERT INTO Jugadores (ID_jugador, Nickname, Contrasena, N_partidas, Color) " +
+                         "VALUES (jugadores_seq.NEXTVAL, ?, ?, 0, ?)";
             pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, nickname);
             pstmt.setString(2, contrasena);
@@ -297,29 +297,33 @@ public class bbdd {
     
     public List<Casilla> obtenerCasillasDePartida(Connection con, int idPartida) {
         List<Casilla> casillas = new ArrayList<>();
-        String query = "SELECT posicion, tipo FROM casillas WHERE id_partida = ?";
-        
+        String query = "SELECT ";
+
+        for (int i = 1; i <= 50; i++) {
+            query += "ID_Casilla_" + i;
+            if (i < 50) query += ", ";
+        }
+        query += " FROM Partidas WHERE id_partida = ?";
+
         try (PreparedStatement stmt = con.prepareStatement(query)) {
-            stmt.setInt(1, idPartida);  // Establecemos el ID de la partida como parámetro
-            
+            stmt.setInt(1, idPartida);
+
             try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    int posicion = rs.getInt("posicion");
-                    String tipoStr = rs.getString("tipo");
-                    TipoCasilla tipo = TipoCasilla.valueOf(tipoStr);  // Convertimos el tipo de String a TipoCasilla
-                    
-                    // Crear el objeto Casilla y agregarlo a la lista
-                    Casilla casilla = new Casilla(posicion, tipo);
-                    casillas.add(casilla);
+                if (rs.next()) {
+                    for (int i = 1; i <= 50; i++) {
+                        String tipoStr = rs.getString("ID_Casilla_" + i);
+                        TipoCasilla tipo = TipoCasilla.valueOf(tipoStr);  // Asumiendo que el String es un enum válido
+                        Casilla casilla = new Casilla(i, tipo);  // El índice de la casilla es su número (1 a 50)
+                        casillas.add(casilla);
+                    }
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
-        return casillas;  // Devolvemos la lista de casillas
-    }
 
+        return casillas;
+    }
     //restaurar la lista de pinguinos
     public static List<Pinguino> obtenerPinguinosDePartida(Connection con, int idPartida) {
         List<Pinguino> pinguinos = new ArrayList<>();
