@@ -553,7 +553,7 @@ public class PantallaJuegoController {
         // Ejemplo de asignación: Casilla 1 = 'INICIO', Casilla 50 = 'META', etc.
         // Esto debe ser ajustado según cómo manejas las casillas en el juego
         for (int i = 0; i < 50; i++) {
-            casillas[i] = i + 1; // Aquí deberías poner la lógica de asignación real
+            casillas[i] = i + 1; //poner la lógica de asignación real
         }
         return casillas;
     }
