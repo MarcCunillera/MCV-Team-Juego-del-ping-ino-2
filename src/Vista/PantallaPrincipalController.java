@@ -4,11 +4,13 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.fxml.FXMLLoader;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -73,16 +75,21 @@ public class PantallaPrincipalController {
             return;
         }
 
-        bbdd.crearJugador(con, usuario, contrasena);
-        System.out.println("Registro exitoso. Usuario: " + usuario);
-        cargarPantallaJuego();
+        if (bbdd.crearJugadorV2(con, usuario, contrasena)) {
+            System.out.println("Registro exitoso. Usuario: " + usuario);
+            cargarPantallaJuego();
+        } else {
+            System.out.println("Error al registrar usuario.");
+        }
     }
 
     private boolean usuarioExiste(String nombre) {
-        try {
-            String sql = "SELECT * FROM Jugadores WHERE Nickname = '" + nombre + "'";
-            ResultSet rs = bbdd.select(con, sql);
-            return rs.next();
+        String sql = "SELECT 1 FROM Jugadores WHERE Nickname = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nombre);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return true; // prevenir registros fallidos por errores
@@ -90,20 +97,26 @@ public class PantallaPrincipalController {
     }
 
     private boolean validarCredenciales(String nombre, String contrasena) {
-        try {
-            String sql = "SELECT * FROM Jugadores WHERE Nickname = '" + nombre + "' AND Contrasena = '" + contrasena + "'";
-            ResultSet rs = bbdd.select(con, sql);
-            return rs.next();
+        String sql = "SELECT 1 FROM Jugadores WHERE Nickname = ? AND Contrasena = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nombre);
+            ps.setString(2, contrasena);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
 
+
     private void cargarPantallaJuego() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/Resources/pantallaJuego.fxml"));
-            Scene scene = new Scene(loader.load());
+            // NO hacer setController si ya tienes fx:controller en el FXML
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
             Stage stage = (Stage) loginButton.getScene().getWindow();
             stage.setScene(scene);
             stage.show();
@@ -111,5 +124,8 @@ public class PantallaPrincipalController {
             e.printStackTrace();
         }
     }
+
+
+
 }
 

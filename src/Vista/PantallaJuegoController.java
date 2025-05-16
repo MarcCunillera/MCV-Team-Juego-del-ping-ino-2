@@ -1,12 +1,16 @@
 package Vista;
 
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.swing.SwingWorker;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import Controlador.*;
@@ -17,6 +21,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -423,9 +428,9 @@ public class PantallaJuegoController {
     private void handleNewGame() {
         System.out.println("Nueva partida.");
         try {
-            // Generar tablero y guardar partida en base de datos
-            idPartida = bbdd.crearNuevaPartida(con); // ¡Aquí ya se genera el tablero aleatorio dentro!
-            
+            // Crear nueva partida en la base de datos
+            idPartida = bbdd.crearNuevaPartida(con);
+
             if (idPartida == -1) {
                 eventos.setText("Error al crear la partida. Verifica la conexión o la base de datos.");
                 return;
@@ -433,94 +438,168 @@ public class PantallaJuegoController {
 
             eventos.setText("Nueva partida creada con ID: " + idPartida);
 
-            // Crear participación para cada jugador (pingüino)
+            // Procesar cada pingüino (jugador)
             for (Pinguino pingu : pingus) {
                 int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
 
+                // Si el jugador no existe, crear y volver a obtener su ID
                 if (idJugador == -1) {
-                    // Si no existe el jugador, lo crea
-                    bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd"); // Mejora esto en producción
+                    boolean creado = bbdd.crearJugadorV2(con, pingu.getNombre(), "defaultPwd");
+                    if (!creado) {
+                        eventos.setText("Error al crear jugador: " + pingu.getNombre());
+                        continue; // Pasar al siguiente pingüino sin detener el bucle
+                    }
                     idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
+                    if (idJugador == -1) {
+                        eventos.setText("No se pudo obtener ID del jugador tras crearlo: " + pingu.getNombre());
+                        continue;
+                    }
                 }
 
-                // Obtener datos del pingüino
-                int posicion = pingu.getPosicion(); // Posición inicial
+                // Obtener atributos del pingüino para la participación
+                int posicion = pingu.getPosicion();
                 int dadoLento = pingu.getDadoLento();
                 int dadoRapido = pingu.getDadoRapido();
                 int peces = pingu.getPescado();
                 int bolasNieve = pingu.getBolasNieve();
 
-                // Crear la participación en la partida
-                bbdd.crearParticipacion(con, idPartida, idJugador, posicion, dadoLento, dadoRapido, peces, bolasNieve);
-                //iniciar tablero nuevo
-                
-                
+                // Crear participación en la partida
+                boolean participacionCreada = bbdd.crearParticipacion(con, idPartida, idJugador, posicion, dadoLento, dadoRapido, peces, bolasNieve);
+                if (!participacionCreada) {
+                    eventos.setText("Error al crear participación para jugador: " + pingu.getNombre());
+                }
             }
+
+            // Inicializar UI y tablero después de crear partida y participaciones
+            alInicioNew();
+            iniciarTablero();
 
         } catch (Exception e) {
             e.printStackTrace();
             eventos.setText("Error al crear nueva partida.");
         }
-        alInicioNew();
-        iniciarTablero();
     }
-
-
+    
+    private int obtenerUltimoNumPartida() throws SQLException {
+        String sql = "SELECT MAX(NUM_PARTIDA) FROM PARTIDAS";
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            } else {
+                return 0;
+            }
+        }
+    }
     
     @FXML
     public void handleSaveGame() {
-        // Mostrar alerta de "guardando" antes de comenzar
-        Alert savingAlert = new Alert(AlertType.INFORMATION);
-        savingAlert.setTitle("Guardando partida");
-        savingAlert.setHeaderText(null);
-        savingAlert.setContentText("Guardando el estado del juego...");
-        savingAlert.show();
+        try {
+            con.setAutoCommit(false);
+            
+            int numPartida = obtenerUltimoNumPartida() + 1;
+            int idPartida = insertarPartida(numPartida);
+            insertarTablero(idPartida, tableroCasillas);
+            insertarParticipacionesYPingus(idPartida, pingus);
 
-        // Ejecutar en segundo plano
-        new Thread(() -> {
+            con.commit();
+            eventos.setText("Partida guardada correctamente.");
+        } catch (SQLException e) {
             try {
-                // 1. Obtener estado actual del tablero
-                Integer[] estadoCasillas = new Integer[50];
-                for (int i = 0; i < tableroCasillas.length; i++) {
-                    estadoCasillas[i] = tableroCasillas[i].ordinal();
-                }
-
-                // 2. Actualizar partida en BD
-                bbdd.actualizarPartida(con, idPartida, "EN CURSO", estadoCasillas);
-
-                // 3. Actualizar participaciones
-                for (Pinguino pingu : pingus) {
-                    int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
-                    if (idJugador == -1) {
-                        bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd");
-                        idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
-                    }
-                    
-                    bbdd.actualizarParticipacion(
-                        con, idPartida, idJugador, 
-                        pingu.getPosicion(), pingu.getDadoLento(), 
-                        pingu.getDadoRapido(), pingu.getPescado(), 
-                        pingu.getBolasNieve()
-                    );
-                }
-
-                // Mostrar éxito en el hilo de JavaFX
-                Platform.runLater(() -> {
-                    savingAlert.close();
-                    eventos.setText("Partida guardada correctamente (ID: " + idPartida + ")");
-                    new Alert(AlertType.INFORMATION, "Juego guardado exitosamente!").show();
-                });
-                
-            } catch (Exception e) {
-                e.printStackTrace();
-                Platform.runLater(() -> {
-                    savingAlert.close();
-                    new Alert(AlertType.ERROR, "Error al guardar: " + e.getMessage()).show();
-                    eventos.setText("Error al guardar la partida");
-                });
+                con.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
             }
-        }).start();
+            e.printStackTrace();
+            eventos.setText("Error al guardar la partida.");
+        }
     }
+
+    private int insertarPartida(int numPartida) throws SQLException {
+        String insertPartida = "INSERT INTO PARTIDAS (ID_PARTIDA, NUM_PARTIDA, ESTADO, HORA, FECHA) " +
+                               "VALUES (seq_partida.NEXTVAL, ?, 'EN CURSO', SYSTIMESTAMP, SYSDATE)";
+        try (PreparedStatement ps = con.prepareStatement(insertPartida, new String[]{"ID_PARTIDA"})) {
+            ps.setInt(1, numPartida);
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                } else {
+                    throw new SQLException("No se generó ID de partida");
+                }
+            }
+        }
+    }
+
+    private void insertarTablero(int idPartida, TipoCasilla[] tableroCasillas) throws SQLException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("INSERT INTO CASILLAS (ID_CASILLA, ID_PARTIDA");
+        for (int i = 1; i <= 50; i++) {
+            sb.append(", ID_CASILLA_" + i);
+        }
+        sb.append(", VALOR) VALUES (seq_casilla.NEXTVAL, ?");
+        for (int i = 0; i < 50; i++) {
+            sb.append(", ?");
+        }
+        sb.append(", ?)");
+
+        try (PreparedStatement ps = con.prepareStatement(sb.toString())) {
+            ps.setInt(1, idPartida);
+            for (int i = 0; i < 50; i++) {
+                ps.setString(i + 2, tableroCasillas[i] != null ? tableroCasillas[i].name() : null);
+            }
+            ps.setString(52, "N/A");
+            ps.executeUpdate();
+        }
+    }
+
+    private void insertarParticipacionesYPingus(int idPartida, List<Pinguino> pingus) throws SQLException {
+        Map<Integer, Integer> jugadorToParticipacion = new HashMap<>();
+
+        for (Pinguino p : pingus) {
+            int idJugador = p.getID();
+
+            if (!jugadorToParticipacion.containsKey(idJugador)) {
+                int idParticipacion = insertarParticipacion(idPartida, idJugador);
+                jugadorToParticipacion.put(idJugador, idParticipacion);
+            }
+
+            int idParticipacion = jugadorToParticipacion.get(idJugador);
+            insertarPinguino(idParticipacion, p);
+        }
+    }
+
+    private int insertarParticipacion(int idPartida, int idJugador) throws SQLException {
+        String insertParticipacion = "INSERT INTO PARTICIPACIONES (ID_PARTICIPACION, ID_PARTIDA, ID_JUGADOR) " +
+                                     "VALUES (seq_participacion.NEXTVAL, ?, ?)";
+        try (PreparedStatement ps = con.prepareStatement(insertParticipacion, new String[]{"ID_PARTICIPACION"})) {
+            ps.setInt(1, idPartida);
+            ps.setInt(2, idJugador);
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                } else {
+                    throw new SQLException("No se generó ID de participación");
+                }
+            }
+        }
+    }
+
+    private void insertarPinguino(int idParticipacion, Pinguino p) throws SQLException {
+        String insertPinguino = "INSERT INTO PINGUINOS (ID_PINGUINO, ID_PARTICIPACION, POSICION, DADO_LENTO, DADO_RAPIDO, PECES, BOLAS_NIEVE) " +
+                                "VALUES (seq_pinguino.NEXTVAL, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = con.prepareStatement(insertPinguino)) {
+            ps.setInt(1, idParticipacion);
+            ps.setInt(2, p.getPosicion());
+            ps.setInt(3, p.getDadoLento());
+            ps.setInt(4, p.getDadoRapido());
+            ps.setInt(5, p.getPescado());
+            ps.setInt(6, p.getBolasNieve());
+            ps.executeUpdate();
+        }
+    }
+
     
     //método para obtener el id de la partida actual
     public static int obtenerIdPartidaActual(Connection con) throws SQLException {
@@ -536,127 +615,113 @@ public class PantallaJuegoController {
             }
         }
     }
-
-
-    // Método para obtener el estado de las casillas (tablero)
-    private Integer[] obtenerEstadoCasillas() {
-        // Este método debe devolver el estado actual de las casillas del tablero
-        Integer[] casillas = new Integer[50];
-        // Ejemplo de asignación: Casilla 1 = 'INICIO', Casilla 50 = 'META', etc.
-        // Esto debe ser ajustado según cómo manejas las casillas en el juego
-        for (int i = 0; i < 50; i++) {
-            casillas[i] = i + 1; //sponer la lógica de asignación real
-        }
-        return casillas;
-    }
     
     //metodo para obtener el número de partida
     private int obtenerNumeroPartidaDesdeInput() {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Cargar partida");
-        dialog.setHeaderText("Carga de partida");
-        dialog.setContentText("Introduce el número de partida:");;
+        dialog.setTitle("Cargar Partida");
+        dialog.setHeaderText("Introduce el número de partida:");
         Optional<String> result = dialog.showAndWait();
         if (result.isPresent()) {
             try {
                 return Integer.parseInt(result.get());
             } catch (NumberFormatException e) {
-                eventos.setText("Número inválido. Usa solo dígitos.");
+                return -1;
             }
-        } else {
-            eventos.setText("Carga cancelada.");
         }
-
         return -1;
     }
+
+
     
     @FXML
-    public void handleLoadGame() {
-        System.out.println("Loaded game.");
-        int numeroPartida = obtenerNumeroPartidaDesdeInput();
-
-        if (numeroPartida != -1) {
-            try {
-                idPartida = bbdd.obtenerIdPartida(con, numeroPartida);
-                if (idPartida != -1) {
-                    eventos.setText("Partida cargada con ID: " + idPartida);
-                    
-                    // Restaurar tablero y pingüinos
-                    restaurarTablero();
-                    restaurarPinguinos();
-                    updateAllPenguinPosition();
-                } else {
-                    eventos.setText("No se encontró la partida con ese número.");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                eventos.setText("Error al cargar la partida.");
+    private void handleLoadGame(ActionEvent event) {
+        try {
+            // 1. Pedir número de partida al usuario
+            int numeroPartida = obtenerNumeroPartidaDesdeInput();
+            if (numeroPartida == -1) {
+                eventos.setText("Número de partida no válido.");
+                return;
             }
+
+            // 2. Obtener ID de partida desde la base de datos
+            idPartida = obtenerIdPartida(numeroPartida);
+            if (idPartida == -1) {
+                eventos.setText("No se encontró una partida con ese número.");
+                return;
+            }
+
+            // 3. Restaurar tablero
+            restaurarTablero();
+
+            // 4. Restaurar pingüinos
+            restaurarPinguinos();
+
+            // 5. Actualizar vista/interfaz
+            updateAllPenguinPosition();
+
+            eventos.setText("Partida cargada correctamente.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            eventos.setText("Error al cargar la partida.");
         }
     }
+    
+    private int obtenerIdPartida(int numeroPartida) {
+        String query = "SELECT ID_PARTIDA FROM PARTIDAS WHERE NUM_PARTIDA = ?";
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setInt(1, numeroPartida);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("ID_PARTIDA");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
 
 
     public void restaurarTablero() {
         try {
-            String queryCasillas = "SELECT " +
-                    "ID_Casilla_1, ID_Casilla_2, ID_Casilla_3, ID_Casilla_4, ID_Casilla_5, " +
-                    "ID_Casilla_6, ID_Casilla_7, ID_Casilla_8, ID_Casilla_9, ID_Casilla_10, " +
-                    "ID_Casilla_11, ID_Casilla_12, ID_Casilla_13, ID_Casilla_14, ID_Casilla_15, " +
-                    "ID_Casilla_16, ID_Casilla_17, ID_Casilla_18, ID_Casilla_19, ID_Casilla_20, " +
-                    "ID_Casilla_21, ID_Casilla_22, ID_Casilla_23, ID_Casilla_24, ID_Casilla_25, " +
-                    "ID_Casilla_26, ID_Casilla_27, ID_Casilla_28, ID_Casilla_29, ID_Casilla_30, " +
-                    "ID_Casilla_31, ID_Casilla_32, ID_Casilla_33, ID_Casilla_34, ID_Casilla_35, " +
-                    "ID_Casilla_36, ID_Casilla_37, ID_Casilla_38, ID_Casilla_39, ID_Casilla_40, " +
-                    "ID_Casilla_41, ID_Casilla_42, ID_Casilla_43, ID_Casilla_44, ID_Casilla_45, " +
-                    "ID_Casilla_46, ID_Casilla_47, ID_Casilla_48, ID_Casilla_49, ID_Casilla_50 " +
-                    "FROM Partidas WHERE ID_Partida = ?";
+            String query = "SELECT " + 
+                IntStream.rangeClosed(1, 50)
+                         .mapToObj(i -> "ID_Casilla_" + i)
+                         .collect(Collectors.joining(", ")) +
+                " FROM PARTIDAS WHERE ID_PARTIDA = ?";
 
-            try (PreparedStatement stmt = con.prepareStatement(queryCasillas)) {
+            try (PreparedStatement stmt = con.prepareStatement(query)) {
                 stmt.setInt(1, idPartida);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         for (int i = 1; i <= 50; i++) {
-                            String columna = "ID_Casilla_" + i;
-                            String valor = rs.getString(columna);
-
-                            if (valor == null || valor.isBlank()) {
-                                tableroCasillas[i - 1] = null; // o un valor por defecto
-                                continue;
-                            }
+                            String columnName = "ID_Casilla_" + i;
+                            String valor = rs.getString(columnName);
 
                             TipoCasilla tipo = null;
-
-                            // Intentar parsear el valor como número (índice)
-                            try {
-                                int index = Integer.parseInt(valor);
-                                // Si es un índice válido del enum
-                                if (index >= 0 && index < TipoCasilla.values().length) {
-                                    tipo = TipoCasilla.values()[index];
-                                } else {
-                                    System.err.println("Índice fuera de rango para casilla " + i + ": " + index);
-                                }
-                            } catch (NumberFormatException e) {
-                                // No es número, intentar parsear como nombre
+                            if (valor != null && !valor.isBlank()) {
                                 try {
                                     tipo = TipoCasilla.valueOf(valor);
                                 } catch (IllegalArgumentException ex) {
                                     System.err.println("Valor inválido para casilla " + i + ": " + valor);
                                 }
                             }
-
                             tableroCasillas[i - 1] = tipo;
                         }
                     }
                 }
             }
+
             actualizarRecursos();
-            
             eventos.setText("Tablero restaurado exitosamente.");
         } catch (SQLException e) {
             e.printStackTrace();
             eventos.setText("Error al restaurar el tablero.");
         }
     }
+
 
 
 
