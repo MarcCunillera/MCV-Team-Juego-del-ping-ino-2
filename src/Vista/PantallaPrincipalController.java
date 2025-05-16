@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.fxml.FXMLLoader;
@@ -113,7 +114,9 @@ public class PantallaPrincipalController {
     private void cargarPantallaJuego() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/Resources/pantallaJuego.fxml"));
-            Scene scene = new Scene(loader.load());
+            // NO hacer setController si ya tienes fx:controller en el FXML
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
             Stage stage = (Stage) loginButton.getScene().getWindow();
             stage.setScene(scene);
             stage.show();
@@ -121,5 +124,8 @@ public class PantallaPrincipalController {
             e.printStackTrace();
         }
     }
+
+
+
 }
 

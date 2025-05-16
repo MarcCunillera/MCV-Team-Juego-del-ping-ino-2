@@ -427,9 +427,9 @@ public class PantallaJuegoController {
     private void handleNewGame() {
         System.out.println("Nueva partida.");
         try {
-            // Generar tablero y guardar partida en base de datos
-            idPartida = bbdd.crearNuevaPartida(con); // ¡Aquí ya se genera el tablero aleatorio dentro!
-            
+            // Crear nueva partida en la base de datos
+            idPartida = bbdd.crearNuevaPartida(con);
+
             if (idPartida == -1) {
                 eventos.setText("Error al crear la partida. Verifica la conexión o la base de datos.");
                 return;
@@ -437,46 +437,63 @@ public class PantallaJuegoController {
 
             eventos.setText("Nueva partida creada con ID: " + idPartida);
 
-            // Crear participación para cada jugador (pingüino)
+            // Procesar cada pingüino (jugador)
             for (Pinguino pingu : pingus) {
                 int idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
 
+                // Si el jugador no existe, crear y volver a obtener su ID
                 if (idJugador == -1) {
-                    // Si no existe el jugador, lo crea
-                    bbdd.crearJugador(con, pingu.getNombre(), "defaultPwd"); // Mejora esto en producción
+                    boolean creado = bbdd.crearJugadorV2(con, pingu.getNombre(), "defaultPwd");
+                    if (!creado) {
+                        eventos.setText("Error al crear jugador: " + pingu.getNombre());
+                        continue; // Pasar al siguiente pingüino sin detener el bucle
+                    }
                     idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
+                    if (idJugador == -1) {
+                        eventos.setText("No se pudo obtener ID del jugador tras crearlo: " + pingu.getNombre());
+                        continue;
+                    }
                 }
 
-                // Obtener datos del pingüino
-                int posicion = pingu.getPosicion(); // Posición inicial
+                // Obtener atributos del pingüino para la participación
+                int posicion = pingu.getPosicion();
                 int dadoLento = pingu.getDadoLento();
                 int dadoRapido = pingu.getDadoRapido();
                 int peces = pingu.getPescado();
                 int bolasNieve = pingu.getBolasNieve();
 
-                // Crear la participación en la partida
-                bbdd.crearParticipacion(con, idPartida, idJugador, posicion, dadoLento, dadoRapido, peces, bolasNieve);
-                //iniciar tablero nuevo
-                
-                
+                // Crear participación en la partida
+                boolean participacionCreada = bbdd.crearParticipacion(con, idPartida, idJugador, posicion, dadoLento, dadoRapido, peces, bolasNieve);
+                if (!participacionCreada) {
+                    eventos.setText("Error al crear participación para jugador: " + pingu.getNombre());
+                }
             }
+
+            // Inicializar UI y tablero después de crear partida y participaciones
+            alInicioNew();
+            iniciarTablero();
 
         } catch (Exception e) {
             e.printStackTrace();
             eventos.setText("Error al crear nueva partida.");
         }
-        alInicioNew();
-        iniciarTablero();
     }
-
-
     
     @FXML
-    public void handleSaveGame(int numPartida, TipoCasilla[] tableroCasillas, List<Pinguino> pingus) {
-        try {
-            con.setAutoCommit(false); // usar transacción
+    public void handleSaveGame(ActionEvent event) {
+        // Aquí obtienes o defines los datos necesarios antes de guardar
+        int numPartida = obtenerNumPartida(); // Método que debes implementar para obtener este dato
+        TipoCasilla[] tableroCasillas = obtenerTableroCasillas(); // Igual para este
+        List<Pinguino> pingus = obtenerPingus(); // Y para esta lista
+        
+        guardarPartida(numPartida, tableroCasillas, pingus);
+    }
 
-            // 1. Insertar la partida
+    private void guardarPartida(int numPartida, TipoCasilla[] tableroCasillas, List<Pinguino> pingus) {
+        try {
+            con.setAutoCommit(false);
+
+            // Insertar partida
             String insertPartida = "INSERT INTO PARTIDAS (ID_PARTIDA, NUM_PARTIDA, ESTADO, HORA, FECHA) " +
                                    "VALUES (seq_partida.NEXTVAL, ?, 'EN CURSO', SYSTIMESTAMP, SYSDATE)";
             int idPartida;
@@ -493,7 +510,7 @@ public class PantallaJuegoController {
                 }
             }
 
-            // 2. Insertar el tablero (casillas)
+            // Insertar tablero (casillas)
             StringBuilder sb = new StringBuilder();
             sb.append("INSERT INTO CASILLAS (ID_CASILLA, ID_PARTIDA");
             for (int i = 1; i <= 50; i++) sb.append(", ID_CASILLA_" + i);
@@ -506,17 +523,16 @@ public class PantallaJuegoController {
                 for (int i = 0; i < 50; i++) {
                     ps.setString(i + 2, tableroCasillas[i] != null ? tableroCasillas[i].name() : null);
                 }
-                ps.setString(52, "N/A"); // campo VALOR (usado o no)
+                ps.setString(52, "N/A");
                 ps.executeUpdate();
             }
 
-            // 3. Insertar Participaciones + Pingüinos (1 por jugador)
+            // Insertar participaciones + pingüinos
             Map<Integer, Integer> jugadorToParticipacion = new HashMap<>();
 
             for (Pinguino p : pingus) {
                 int idJugador = p.getID();
 
-                // Participación (si no se ha insertado antes para este jugador)
                 if (!jugadorToParticipacion.containsKey(idJugador)) {
                     String insertParticipacion = "INSERT INTO PARTICIPACIONES (ID_PARTICIPACION, ID_PARTIDA, ID_JUGADOR) " +
                                                  "VALUES (seq_participacion.NEXTVAL, ?, ?)";
@@ -536,7 +552,6 @@ public class PantallaJuegoController {
 
                 int idParticipacion = jugadorToParticipacion.get(idJugador);
 
-                // Pingüino
                 String insertPinguino = "INSERT INTO PINGUINOS (ID_PINGUINO, ID_PARTICIPACION, POSICION, DADO_LENTO, DADO_RAPIDO, PECES, BOLAS_NIEVE) " +
                                         "VALUES (seq_pinguino.NEXTVAL, ?, ?, ?, ?, ?, ?)";
                 try (PreparedStatement ps = con.prepareStatement(insertPinguino)) {
@@ -561,6 +576,22 @@ public class PantallaJuegoController {
             e.printStackTrace();
             eventos.setText("Error al guardar la partida.");
         }
+    }
+
+    // Métodos auxiliares para obtener los datos necesarios (implementa según tu lógica)
+    private int obtenerNumPartida() {
+        // Implementa la forma en que obtienes el número de partida actual
+        return 1; // ejemplo
+    }
+
+    private TipoCasilla[] obtenerTableroCasillas() {
+        // Implementa la forma en que obtienes las casillas del tablero actual
+        return new TipoCasilla[50]; // ejemplo vacio
+    }
+
+    private List<Pinguino> obtenerPingus() {
+        // Implementa la forma en que obtienes la lista de pingüinos actual
+        return new ArrayList<>(); // ejemplo vacio
     }
 
     
