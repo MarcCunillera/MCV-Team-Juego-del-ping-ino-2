@@ -21,6 +21,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -479,91 +480,27 @@ public class PantallaJuegoController {
         }
     }
     
-    @FXML
-    public void handleSaveGame(ActionEvent event) {
-        // Aquí obtienes o defines los datos necesarios antes de guardar
-        int numPartida = obtenerNumPartida(); // Método que debes implementar para obtener este dato
-        TipoCasilla[] tableroCasillas = obtenerTableroCasillas(); // Igual para este
-        List<Pinguino> pingus = obtenerPingus(); // Y para esta lista
-        
-        guardarPartida(numPartida, tableroCasillas, pingus);
+    private int obtenerUltimoNumPartida() throws SQLException {
+        String sql = "SELECT MAX(NUM_PARTIDA) FROM PARTIDAS";
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            } else {
+                return 0;
+            }
+        }
     }
-
-    private void guardarPartida(int numPartida, TipoCasilla[] tableroCasillas, List<Pinguino> pingus) {
+    
+    @FXML
+    public void handleSaveGame() {
         try {
             con.setAutoCommit(false);
-
-            // Insertar partida
-            String insertPartida = "INSERT INTO PARTIDAS (ID_PARTIDA, NUM_PARTIDA, ESTADO, HORA, FECHA) " +
-                                   "VALUES (seq_partida.NEXTVAL, ?, 'EN CURSO', SYSTIMESTAMP, SYSDATE)";
-            int idPartida;
-
-            try (PreparedStatement ps = con.prepareStatement(insertPartida, new String[]{"ID_PARTIDA"})) {
-                ps.setInt(1, numPartida);
-                ps.executeUpdate();
-                try (ResultSet rs = ps.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        idPartida = rs.getInt(1);
-                    } else {
-                        throw new SQLException("No se generó ID de partida");
-                    }
-                }
-            }
-
-            // Insertar tablero (casillas)
-            StringBuilder sb = new StringBuilder();
-            sb.append("INSERT INTO CASILLAS (ID_CASILLA, ID_PARTIDA");
-            for (int i = 1; i <= 50; i++) sb.append(", ID_CASILLA_" + i);
-            sb.append(", VALOR) VALUES (seq_casilla.NEXTVAL, ?");
-            for (int i = 0; i < 50; i++) sb.append(", ?");
-            sb.append(", ?)");
-
-            try (PreparedStatement ps = con.prepareStatement(sb.toString())) {
-                ps.setInt(1, idPartida);
-                for (int i = 0; i < 50; i++) {
-                    ps.setString(i + 2, tableroCasillas[i] != null ? tableroCasillas[i].name() : null);
-                }
-                ps.setString(52, "N/A");
-                ps.executeUpdate();
-            }
-
-            // Insertar participaciones + pingüinos
-            Map<Integer, Integer> jugadorToParticipacion = new HashMap<>();
-
-            for (Pinguino p : pingus) {
-                int idJugador = p.getID();
-
-                if (!jugadorToParticipacion.containsKey(idJugador)) {
-                    String insertParticipacion = "INSERT INTO PARTICIPACIONES (ID_PARTICIPACION, ID_PARTIDA, ID_JUGADOR) " +
-                                                 "VALUES (seq_participacion.NEXTVAL, ?, ?)";
-                    int idParticipacion;
-                    try (PreparedStatement ps = con.prepareStatement(insertParticipacion, new String[]{"ID_PARTICIPACION"})) {
-                        ps.setInt(1, idPartida);
-                        ps.setInt(2, idJugador);
-                        ps.executeUpdate();
-
-                        try (ResultSet rs = ps.getGeneratedKeys()) {
-                            rs.next();
-                            idParticipacion = rs.getInt(1);
-                        }
-                    }
-                    jugadorToParticipacion.put(idJugador, idParticipacion);
-                }
-
-                int idParticipacion = jugadorToParticipacion.get(idJugador);
-
-                String insertPinguino = "INSERT INTO PINGUINOS (ID_PINGUINO, ID_PARTICIPACION, POSICION, DADO_LENTO, DADO_RAPIDO, PECES, BOLAS_NIEVE) " +
-                                        "VALUES (seq_pinguino.NEXTVAL, ?, ?, ?, ?, ?, ?)";
-                try (PreparedStatement ps = con.prepareStatement(insertPinguino)) {
-                    ps.setInt(1, idParticipacion);
-                    ps.setInt(2, p.getPosicion());
-                    ps.setInt(3, p.getDadoLento());
-                    ps.setInt(4, p.getDadoRapido());
-                    ps.setInt(5, p.getPescado());
-                    ps.setInt(6, p.getBolasNieve());
-                    ps.executeUpdate();
-                }
-            }
+            
+            int numPartida = obtenerUltimoNumPartida() + 1;
+            int idPartida = insertarPartida(numPartida);
+            insertarTablero(idPartida, tableroCasillas);
+            insertarParticipacionesYPingus(idPartida, pingus);
 
             con.commit();
             eventos.setText("Partida guardada correctamente.");
@@ -578,20 +515,89 @@ public class PantallaJuegoController {
         }
     }
 
-    // Métodos auxiliares para obtener los datos necesarios (implementa según tu lógica)
-    private int obtenerNumPartida() {
-        // Implementa la forma en que obtienes el número de partida actual
-        return 1; // ejemplo
+    private int insertarPartida(int numPartida) throws SQLException {
+        String insertPartida = "INSERT INTO PARTIDAS (ID_PARTIDA, NUM_PARTIDA, ESTADO, HORA, FECHA) " +
+                               "VALUES (seq_partida.NEXTVAL, ?, 'EN CURSO', SYSTIMESTAMP, SYSDATE)";
+        try (PreparedStatement ps = con.prepareStatement(insertPartida, new String[]{"ID_PARTIDA"})) {
+            ps.setInt(1, numPartida);
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                } else {
+                    throw new SQLException("No se generó ID de partida");
+                }
+            }
+        }
     }
 
-    private TipoCasilla[] obtenerTableroCasillas() {
-        // Implementa la forma en que obtienes las casillas del tablero actual
-        return new TipoCasilla[50]; // ejemplo vacio
+    private void insertarTablero(int idPartida, TipoCasilla[] tableroCasillas) throws SQLException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("INSERT INTO CASILLAS (ID_CASILLA, ID_PARTIDA");
+        for (int i = 1; i <= 50; i++) {
+            sb.append(", ID_CASILLA_" + i);
+        }
+        sb.append(", VALOR) VALUES (seq_casilla.NEXTVAL, ?");
+        for (int i = 0; i < 50; i++) {
+            sb.append(", ?");
+        }
+        sb.append(", ?)");
+
+        try (PreparedStatement ps = con.prepareStatement(sb.toString())) {
+            ps.setInt(1, idPartida);
+            for (int i = 0; i < 50; i++) {
+                ps.setString(i + 2, tableroCasillas[i] != null ? tableroCasillas[i].name() : null);
+            }
+            ps.setString(52, "N/A");
+            ps.executeUpdate();
+        }
     }
 
-    private List<Pinguino> obtenerPingus() {
-        // Implementa la forma en que obtienes la lista de pingüinos actual
-        return new ArrayList<>(); // ejemplo vacio
+    private void insertarParticipacionesYPingus(int idPartida, List<Pinguino> pingus) throws SQLException {
+        Map<Integer, Integer> jugadorToParticipacion = new HashMap<>();
+
+        for (Pinguino p : pingus) {
+            int idJugador = p.getID();
+
+            if (!jugadorToParticipacion.containsKey(idJugador)) {
+                int idParticipacion = insertarParticipacion(idPartida, idJugador);
+                jugadorToParticipacion.put(idJugador, idParticipacion);
+            }
+
+            int idParticipacion = jugadorToParticipacion.get(idJugador);
+            insertarPinguino(idParticipacion, p);
+        }
+    }
+
+    private int insertarParticipacion(int idPartida, int idJugador) throws SQLException {
+        String insertParticipacion = "INSERT INTO PARTICIPACIONES (ID_PARTICIPACION, ID_PARTIDA, ID_JUGADOR) " +
+                                     "VALUES (seq_participacion.NEXTVAL, ?, ?)";
+        try (PreparedStatement ps = con.prepareStatement(insertParticipacion, new String[]{"ID_PARTICIPACION"})) {
+            ps.setInt(1, idPartida);
+            ps.setInt(2, idJugador);
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                } else {
+                    throw new SQLException("No se generó ID de participación");
+                }
+            }
+        }
+    }
+
+    private void insertarPinguino(int idParticipacion, Pinguino p) throws SQLException {
+        String insertPinguino = "INSERT INTO PINGUINOS (ID_PINGUINO, ID_PARTICIPACION, POSICION, DADO_LENTO, DADO_RAPIDO, PECES, BOLAS_NIEVE) " +
+                                "VALUES (seq_pinguino.NEXTVAL, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = con.prepareStatement(insertPinguino)) {
+            ps.setInt(1, idParticipacion);
+            ps.setInt(2, p.getPosicion());
+            ps.setInt(3, p.getDadoLento());
+            ps.setInt(4, p.getDadoRapido());
+            ps.setInt(5, p.getPescado());
+            ps.setInt(6, p.getBolasNieve());
+            ps.executeUpdate();
+        }
     }
 
     
