@@ -58,6 +58,21 @@ public class bbdd {
             e.printStackTrace();
         }
     }
+    
+    public static boolean crearJugadorV2(Connection con, String nickname, String contrasena) {
+        String sql = "INSERT INTO Jugadores (ID_JUGADOR, NICKNAME, CONTRASENA, N_PARTIDAS, COLOR) " +
+                     "VALUES (jugadores_seq.NEXTVAL, ?, ?, 0, null)";
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nickname);
+            ps.setString(2, contrasena);
+            int filasInsertadas = ps.executeUpdate();
+            return filasInsertadas > 0; // true si se insertó al menos una fila
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     public static int generarNumeroPartida(Connection con) throws SQLException {
         String sql = "SELECT NVL(MAX(Num_Partida), 0) + 1 AS nextNum FROM Partidas";
