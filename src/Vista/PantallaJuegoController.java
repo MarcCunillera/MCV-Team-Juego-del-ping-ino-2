@@ -663,23 +663,50 @@ public class PantallaJuegoController {
     public void restaurarPinguinos() {
         try {
             // Recuperar los pingüinos de la base de datos usando el idPartida
-            String queryPinguinos = "SELECT j.ID_Jugador, j.Nickname, p.Jugador_pos, p.dado_lento, p.dado_rapido, p.peces, p.bolas_nieve FROM Jugadores j, Participaciones p WHERE j.id_jugador = p.id_jugador AND id_partida = ?";
+        	String queryPinguinos = "SELECT j.ID_Jugador, j.Nickname, " +
+                    "p.Jugador_pos_1, p.Jugador_pos_2, p.Jugador_pos_3, p.Jugador_pos_4, " +
+                    "p.dado_lento_1, p.dado_lento_2, p.dado_lento_3, p.dado_lento_4, " +
+                    "p.dado_rapido_1, p.dado_rapido_2, p.dado_rapido_3, p.dado_rapido_4, " +
+                    "p.peces_1, p.peces_2, p.peces_3, p.peces_4, " +
+                    "p.bolas_nieve_1, p.bolas_nieve_2, p.bolas_nieve_3, p.bolas_nieve_4 " +
+                    "FROM Jugadores j " +
+                    "INNER JOIN Participaciones p ON j.id_jugador = p.id_jugador " +
+                    "WHERE p.id_partida = ?";
 
             try (PreparedStatement stmt = con.prepareStatement(queryPinguinos)) {
                 stmt.setInt(1, idPartida); // Usamos idPartida para filtrar los pingüinos
 
                 try (ResultSet rs = stmt.executeQuery()) {
+                	pingus.clear(); //borrar los pinguinos que hay
                     while (rs.next()) {
                         int id = rs.getInt("ID_Jugador");
                         String nombre = rs.getString("Nickname");
-                        int posicion = rs.getInt("Jugador_pos");
-                        int dadoLento = rs.getInt("dado_lento");
-                        int dadoRapido = rs.getInt("dado_rapido");
-                        int pescado = rs.getInt("peces");
-                        int bolasNieve = rs.getInt("bolas_nieve");
+                        int posicion1 = rs.getInt("Jugador_pos_1");
+                        int posicion2 = rs.getInt("Jugador_pos_2");
+                        int posicion3 = rs.getInt("Jugador_pos_3");
+                        int posicion4 = rs.getInt("Jugador_pos_4");
+                        int dadoLento1 = rs.getInt("dado_lento_1");
+                        int dadoLento2 = rs.getInt("dado_lento_2");
+                        int dadoLento3 = rs.getInt("dado_lento_3");
+                        int dadoLento4 = rs.getInt("dado_lento_4");
+                        int dadoRapido1 = rs.getInt("dado_rapido_1");
+                        int dadoRapido2 = rs.getInt("dado_rapido_2");
+                        int dadoRapido3 = rs.getInt("dado_rapido_3");
+                        int dadoRapido4 = rs.getInt("dado_rapido_4");
+                        int pescado1 = rs.getInt("peces_1");
+                        int pescado2 = rs.getInt("peces_2");
+                        int pescado3 = rs.getInt("peces_3");
+                        int pescado4 = rs.getInt("peces_4");
+                        int bolasNieve1 = rs.getInt("bolas_nieve_1");
+                        int bolasNieve2 = rs.getInt("bolas_nieve_2");
+                        int bolasNieve3 = rs.getInt("bolas_nieve_3");
+                        int bolasNieve4 = rs.getInt("bolas_nieve_4");
 
                         // Crear el pingüino y añadirlo a la lista
-                        new Pinguino(id, nombre, posicion, dadoLento, dadoRapido, pescado, bolasNieve);
+                        new Pinguino(1, "Azul", posicion1, dadoLento1, dadoRapido1, pescado1, bolasNieve1);
+                        new Pinguino(2, "Rojo", posicion2, dadoLento2, dadoRapido2, pescado2, bolasNieve2);
+                        new Pinguino(3, "Verde", posicion3, dadoLento3, dadoRapido3, pescado3, bolasNieve3);
+                        new Pinguino(4, "Amarillo", posicion4, dadoLento4, dadoRapido4, pescado4, bolasNieve4);
                     }
                 }
             }
