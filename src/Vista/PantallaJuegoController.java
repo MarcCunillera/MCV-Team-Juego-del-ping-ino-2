@@ -582,47 +582,70 @@ public class PantallaJuegoController {
     //metodo para obtener el número de partida
     private int obtenerNumeroPartidaDesdeInput() {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Cargar partida");
-        dialog.setHeaderText("Carga de partida");
-        dialog.setContentText("Introduce el número de partida:");
-
+        dialog.setTitle("Cargar Partida");
+        dialog.setHeaderText("Introduce el número de partida:");
         Optional<String> result = dialog.showAndWait();
         if (result.isPresent()) {
             try {
                 return Integer.parseInt(result.get());
             } catch (NumberFormatException e) {
-                eventos.setText("Número inválido. Usa solo dígitos.");
+                return -1;
             }
-        } else {
-            eventos.setText("Carga cancelada.");
         }
-
         return -1;
     }
 
+
     
     @FXML
-    public void handleLoadGame() {
-        System.out.println("Loaded game.");
-        int numeroPartida = obtenerNumeroPartidaDesdeInput();
-
-        if (numeroPartida != -1) {
-            try {
-                idPartida = bbdd.obtenerIdPartida(con, numeroPartida);
-                if (idPartida != -1) {
-                    eventos.setText("Partida cargada con ID: " + idPartida);
-                    restaurarTablero();
-                    restaurarPinguinos();
-                    updateAllPenguinPosition();
-                } else {
-                    eventos.setText("No se encontró la partida con ese número.");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                eventos.setText("Error al cargar la partida.");
+    private void handleLoadGame(ActionEvent event) {
+        try {
+            // 1. Pedir número de partida al usuario
+            int numeroPartida = obtenerNumeroPartidaDesdeInput();
+            if (numeroPartida == -1) {
+                eventos.setText("Número de partida no válido.");
+                return;
             }
+
+            // 2. Obtener ID de partida desde la base de datos
+            idPartida = obtenerIdPartida(numeroPartida);
+            if (idPartida == -1) {
+                eventos.setText("No se encontró una partida con ese número.");
+                return;
+            }
+
+            // 3. Restaurar tablero
+            restaurarTablero();
+
+            // 4. Restaurar pingüinos
+            restaurarPinguinos();
+
+            // 5. Actualizar vista/interfaz
+            updateAllPenguinPosition();
+
+            eventos.setText("Partida cargada correctamente.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            eventos.setText("Error al cargar la partida.");
         }
     }
+    
+    private int obtenerIdPartida(int numeroPartida) {
+        String query = "SELECT ID_PARTIDA FROM PARTIDAS WHERE NUM_PARTIDA = ?";
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setInt(1, numeroPartida);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("ID_PARTIDA");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+
 
     public void restaurarTablero() {
         try {
