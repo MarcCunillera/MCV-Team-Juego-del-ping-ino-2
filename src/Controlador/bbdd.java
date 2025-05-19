@@ -134,18 +134,60 @@ public class bbdd {
     }
 
 
-    public static void insertarParticipacion(Connection con, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) throws SQLException {
-        String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos_1, Dado_Lento_1, Dado_Rapido_1, Peces_1, Bolas_Nieve_1) " +
-                     "VALUES (PARTICIPACIONES_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setInt(1, idPartida);
-        ps.setInt(2, idJugador);
-        ps.setInt(3, posicion);
-        ps.setInt(4, dadoLento);
-        ps.setInt(5, dadoRapido);
-        ps.setInt(6, peces);
-        ps.setInt(7, bolasNieve);
-        ps.executeUpdate();
+    public static void insertarParticipacion(Connection con, int idPartida, ArrayList<Pinguino> pinguinos) throws SQLException {
+        // Verificar que hay exactamente 4 pingüinos
+        if (pinguinos.size() != 4) {
+            throw new SQLException("Debe haber exactamente 4 pingüinos para insertar la participación");
+        }
+
+        String sql = "INSERT INTO DW2425_PIN_GRUP07_PARTICIPACIONES " +
+                    "(ID_PARTICIPACION, ID_PARTIDA, ID_JUGADOR, " +
+                    "JUGADOR_POS_1, JUGADOR_POS_2, JUGADOR_POS_3, JUGADOR_POS_4, " +
+                    "DABO_LENTO_1, DABO_LENTO_2, DABO_LENTO_3, DABO_LENTO_4, " +
+                    "DABO_RAPIDO_1, DABO_RAPIDO_2, DABO_RAPIDO_3, DABO_RAPIDO_4, " +
+                    "PECES_2, PECES_3, PECES_4, " +
+                    "BOLAS_NIEVE_1, BOLAS_NIEVE_2, BOLAS_NIEVE_3, BOLAS_NIEVE_4) " +
+                    "VALUES (PARTICIPACIONES_SEQ.NEXTVAL, ?, ?, " +
+                    "?, ?, ?, ?, " +    // Posiciones
+                    "?, ?, ?, ?, " +    // Dados lentos
+                    "?, ?, ?, ?, " +    // Dados rápidos
+                    "?, ?, ?, " +       // Peces (nota: PECES_1 no existe)
+                    "?, ?, ?, ?)";      // Bolas de nieve
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            // ID_PARTIDA
+            ps.setInt(1, idPartida);
+            
+            // ID_JUGADOR (usamos el ID del primer pingüino como jugador principal)
+            ps.setInt(2, pinguinos.get(0).getID());
+            
+            // Posiciones de los 4 pingüinos
+            for (int i = 0; i < 4; i++) {
+                ps.setInt(3 + i, pinguinos.get(i).getPosicion());
+            }
+            
+            // Dados lentos de los 4 pingüinos
+            for (int i = 0; i < 4; i++) {
+                ps.setInt(7 + i, pinguinos.get(i).getDadoLento());
+            }
+            
+            // Dados rápidos de los 4 pingüinos
+            for (int i = 0; i < 4; i++) {
+                ps.setInt(11 + i, pinguinos.get(i).getDadoRapido());
+            }
+            
+            // Peces (nota: PECES_1 no existe en tu tabla, empieza desde PECES_2)
+            for (int i = 0; i < 3; i++) {
+                ps.setInt(15 + i, pinguinos.get(i + 1).getPescado()); // +1 porque PECES_1 no existe
+            }
+            
+            // Bolas de nieve de los 4 pingüinos
+            for (int i = 0; i < 4; i++) {
+                ps.setInt(18 + i, pinguinos.get(i).getBolasNieve());
+            }
+            
+            ps.executeUpdate();
+        }
     }
 
     public static void actualizarParticipacion(Connection con, int idPartida, String nombre, int nuevaPosicion) {
@@ -184,7 +226,6 @@ public class bbdd {
     		pstmt.setInt(1, idPartida);
     		pstmt.setInt(2, idJugador);
     		pstmt.setInt(3, posicion);
-    		pstmt.setInt(4, dadoLento);
     		pstmt.setInt(5, dadoRapido);
     		pstmt.setInt(6, peces);
     		pstmt.setInt(7, bolasNieve);
