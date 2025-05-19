@@ -721,29 +721,44 @@ public class PantallaJuegoController {
 
     
     public void actualizarRecursos() {
-        // Aquí podrías actualizar los recursos del juego, como los peces y la nieve
-
-        String query = "SELECT PECES_1, BOLAS_NIEVE_1, DADO_LENTO_1, DADO_RAPIDO_1 FROM PARTICIPACIONES WHERE id_partida = ?";
-        
-        try (PreparedStatement stmt = con.prepareStatement(query)) {
-            stmt.setInt(1, idPartida);  // Usamos el idPartida para filtrar los recursos específicos
+        try {
+            // Consulta actualizada para obtener todos los recursos de los 4 pingüinos
+            String query = "SELECT " +
+                          "DABO_LENTO_1, DABO_LENTO_2, DABO_LENTO_3, DABO_LENTO_4, " +
+                          "DABO_RAPIDO_1, DABO_RAPIDO_2, DABO_RAPIDO_3, DABO_RAPIDO_4, " +
+                          "PECES_1, PECES_2, PECES_3, PECES_4, " +  // Nota: No existe PECES_1 en tu tabla
+                          "BOLAS_NIEVE_1, BOLAS_NIEVE_2, BOLAS_NIEVE_3, BOLAS_NIEVE_4 " +
+                          "FROM DW2425_PIN_GRUP07_PARTICIPACIONES " +
+                          "WHERE ID_PARTIDA = ?";
             
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    int cantidadPecesRecuperados = rs.getInt("PECES_1");
-                    int cantidadNieveRecuperada = rs.getInt("BOLAS_NIEVE_1");
-                    int cantidadRapidoRecuperado = rs.getInt("DADO_RAPIDO_1");
-                    int cantidadLentoRecuperado = rs.getInt("DADO_LENTO_1");
-                    
-                    // Actualizamos las propiedades
-                    cantidadPeces.set(cantidadPecesRecuperados);
-                    cantidadNieve.set(cantidadNieveRecuperada);
-                    cantidadLento.set(cantidadLentoRecuperado);
-                    cantidadRapido.set(cantidadRapidoRecuperado);
+            try (PreparedStatement stmt = con.prepareStatement(query)) {
+                stmt.setInt(1, idPartida);
+                
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        // Actualizar los recursos para cada pingüino en la lista
+                        for (int i = 0; i < Pinguino.ListaPinguinos.size() && i < 4; i++) {
+                            Pinguino p = Pinguino.ListaPinguinos.get(i);
+                            
+                            // Actualizar dados lentos
+                            p.setDadoLento(rs.getInt("DABO_LENTO_" + (i+1)));
+                            
+                            // Actualizar dados rápidos
+                            p.setDadoRapido(rs.getInt("DABO_RAPIDO_" + (i+1)));
+                            
+                            // Actualizar bolas de nieve
+                            p.setBolasNieve(rs.getInt("BOLAS_NIEVE_" + (i+1)));
+                            
+                            // Actualizar peces
+                            p.setPescado(rs.getInt("PECES_" + (i+1)));
+                            
+                        }
+                    }
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            eventos.setText("Error al actualizar recursos: " + e.getMessage());
         }
     }
 
