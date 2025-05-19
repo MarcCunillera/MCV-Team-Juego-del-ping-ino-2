@@ -178,7 +178,7 @@ public class bbdd {
     	PreparedStatement pstmt = null;
 
     	try {
-    		String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
+    		String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos_1, Dado_Lento_1, Dado_Rapido_1, Peces_1, Bolas_Nieve_1) " +
     				"VALUES (PARTICIPACIONES_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
     		pstmt = conn.prepareStatement(sql);
     		pstmt.setInt(1, idPartida);

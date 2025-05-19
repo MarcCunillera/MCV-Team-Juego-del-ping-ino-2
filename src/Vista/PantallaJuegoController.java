@@ -188,7 +188,8 @@ public class PantallaJuegoController {
     	tableroCasillas[0] = TipoCasilla.Normal;
     	tableroCasillas[49] = TipoCasilla.Meta;
     	
-
+    	//vaciar imágenes anteriores (si hay)
+    	eliminarImagenesEspeciales();
     	
     	//imagenes
     	mostrarImgAgujero();
@@ -965,6 +966,24 @@ public class PantallaJuegoController {
     			tablero.add(imageView, col, row);
     		}
     	}
+    }
+    
+
+    //borrar las imagenes residuales
+    private void eliminarImagenesEspeciales() {
+        tablero.getChildren().removeIf(node -> {
+            if (node instanceof ImageView) {
+                ImageView imgView = (ImageView) node;
+                String url = imgView.getImage().getUrl();
+                return url != null && (
+                    url.contains("agujero.png") ||
+                    url.contains("trineo.png") ||
+                    url.contains("interrogante.png") ||
+                    url.contains("oso.png")
+                );
+            }
+            return false;
+        });
     }
     
 }
