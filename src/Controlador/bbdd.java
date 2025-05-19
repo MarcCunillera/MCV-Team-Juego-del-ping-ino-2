@@ -145,45 +145,48 @@ public class bbdd {
                     "JUGADOR_POS_1, JUGADOR_POS_2, JUGADOR_POS_3, JUGADOR_POS_4, " +
                     "DABO_LENTO_1, DABO_LENTO_2, DABO_LENTO_3, DABO_LENTO_4, " +
                     "DABO_RAPIDO_1, DABO_RAPIDO_2, DABO_RAPIDO_3, DABO_RAPIDO_4, " +
-                    "PECES_2, PECES_3, PECES_4, " +
+                    "PECES_1, PECES_2, PECES_3, PECES_4, " +  // Nota: No existe PECES_1
                     "BOLAS_NIEVE_1, BOLAS_NIEVE_2, BOLAS_NIEVE_3, BOLAS_NIEVE_4) " +
                     "VALUES (PARTICIPACIONES_SEQ.NEXTVAL, ?, ?, " +
-                    "?, ?, ?, ?, " +    // Posiciones
-                    "?, ?, ?, ?, " +    // Dados lentos
-                    "?, ?, ?, ?, " +    // Dados rápidos
-                    "?, ?, ?, " +       // Peces (nota: PECES_1 no existe)
-                    "?, ?, ?, ?)";      // Bolas de nieve
+                    "?, ?, ?, ?, " +    // 4 posiciones (total: 7)
+                    "?, ?, ?, ?, " +    // 4 dados lentos (total: 11)
+                    "?, ?, ?, ?, " +    // 4 dados rápidos (total: 15)
+                    "?, ?, ?, " +       // 4 peces (total: 18)
+                    "?, ?, ?, ?)";      // 4 bolas de nieve (total: 22)
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-            // ID_PARTIDA
-            ps.setInt(1, idPartida);
+            // Contador de parámetros
+            int paramIndex = 1;
             
-            // ID_JUGADOR (usamos el ID del primer pingüino como jugador principal)
-            ps.setInt(2, pinguinos.get(0).getID());
+            // ID_PARTIDA (parámetro 1)
+            ps.setInt(paramIndex++, idPartida);
             
-            // Posiciones de los 4 pingüinos
+            // ID_JUGADOR (parámetro 2)
+            ps.setInt(paramIndex++, pinguinos.get(0).getID());
+            
+            // Posiciones (parámetros 3-6)
             for (int i = 0; i < 4; i++) {
-                ps.setInt(3 + i, pinguinos.get(i).getPosicion());
+                ps.setInt(paramIndex++, pinguinos.get(i).getPosicion());
             }
             
-            // Dados lentos de los 4 pingüinos
+            // Dados lentos (parámetros 7-10)
             for (int i = 0; i < 4; i++) {
-                ps.setInt(7 + i, pinguinos.get(i).getDadoLento());
+                ps.setInt(paramIndex++, pinguinos.get(i).getDadoLento());
             }
             
-            // Dados rápidos de los 4 pingüinos
+            // Dados rápidos (parámetros 11-14)
             for (int i = 0; i < 4; i++) {
-                ps.setInt(11 + i, pinguinos.get(i).getDadoRapido());
+                ps.setInt(paramIndex++, pinguinos.get(i).getDadoRapido());
             }
             
-            // Peces (nota: PECES_1 no existe en tu tabla, empieza desde PECES_2)
-            for (int i = 0; i < 3; i++) {
-                ps.setInt(15 + i, pinguinos.get(i + 1).getPescado()); // +1 porque PECES_1 no existe
+            // Peces (parámetros 15-17)
+            for (int i = 0; i < 4; i++) { 
+                ps.setInt(paramIndex++, pinguinos.get(i).getPescado());
             }
             
-            // Bolas de nieve de los 4 pingüinos
+            // Bolas de nieve (parámetros 18-21)
             for (int i = 0; i < 4; i++) {
-                ps.setInt(18 + i, pinguinos.get(i).getBolasNieve());
+                ps.setInt(paramIndex++, pinguinos.get(i).getBolasNieve());
             }
             
             ps.executeUpdate();
