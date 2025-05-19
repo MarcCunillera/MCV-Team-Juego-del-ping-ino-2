@@ -722,17 +722,17 @@ public class PantallaJuegoController {
     public void actualizarRecursos() {
         // Aquí podrías actualizar los recursos del juego, como los peces y la nieve
 
-        String query = "SELECT PECES, BOLAS_NIEVE, DADO_LENTO, DADO_RAPIDO FROM PARTICIPACIONES WHERE id_partida = ?";
+        String query = "SELECT PECES_1, BOLAS_NIEVE_1, DADO_LENTO_1, DADO_RAPIDO_1 FROM PARTICIPACIONES WHERE id_partida = ?";
         
         try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setInt(1, idPartida);  // Usamos el idPartida para filtrar los recursos específicos
             
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    int cantidadPecesRecuperados = rs.getInt("PECES");
-                    int cantidadNieveRecuperada = rs.getInt("BOLAS_NIEVE");
-                    int cantidadRapidoRecuperado = rs.getInt("DADO_RAPIDO");
-                    int cantidadLentoRecuperado = rs.getInt("DADO_LENTO");
+                    int cantidadPecesRecuperados = rs.getInt("PECES_1");
+                    int cantidadNieveRecuperada = rs.getInt("BOLAS_NIEVE_1");
+                    int cantidadRapidoRecuperado = rs.getInt("DADO_RAPIDO_1");
+                    int cantidadLentoRecuperado = rs.getInt("DADO_LENTO_1");
                     
                     // Actualizamos las propiedades
                     cantidadPeces.set(cantidadPecesRecuperados);

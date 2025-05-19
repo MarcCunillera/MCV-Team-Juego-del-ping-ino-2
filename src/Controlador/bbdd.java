@@ -119,8 +119,8 @@ public class bbdd {
         }
 
         try {
-            String sql = "INSERT INTO Jugadores (ID_jugador, Nickname, Contrasena, N_partidas, Color) " +
-                         "VALUES (JUGADORES_SEQ.NEXTVAL, ?, ?, 0, ?)";
+            String sql = "INSERT INTO Jugadores (ID_jugador, Nickname, Contrasena, N_partidas) " +
+                         "VALUES (JUGADORES_SEQ.NEXTVAL, ?, ?, 0)";
             pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, nickname);
             pstmt.setString(2, contrasena);
@@ -204,32 +204,25 @@ public class bbdd {
 
         try {
             String[] casillas = new String[numCasillas];
-
-            // Inicializamos con tipo Normal por defecto
             Arrays.fill(casillas, "Normal");
-
-            // Posiciones especiales
             casillas[0] = "Normal"; // INICIO
             casillas[numCasillas - 1] = "Meta"; // META
 
-            // Definimos los límites de cada tipo especial
+            // Tipos de casillas especiales y sus límites
             Map<String, Integer> limites = new HashMap<>();
             limites.put("Agujero", 4);
             limites.put("Oso", 3);
             limites.put("Interrogante", 7);
             limites.put("Trineo", 4);
 
+            // Generar posiciones aleatorias para las casillas especiales
             List<Integer> posiciones = new ArrayList<>();
             for (int i = 1; i < numCasillas - 1; i++) {
-                posiciones.add(i); // Posiciones del 2 al 49 (índices 1 a 48)
+                posiciones.add(i);
             }
-
-            Collections.shuffle(posiciones); // Aleatorizamos las posiciones
-
-            Random rand = new Random();
+            Collections.shuffle(posiciones);
             int index = 0;
 
-            // Asignar los tipos limitados
             for (Map.Entry<String, Integer> entry : limites.entrySet()) {
                 String tipo = entry.getKey();
                 int cantidad = entry.getValue();
@@ -238,34 +231,39 @@ public class bbdd {
                 }
             }
 
-            // Armamos la sentencia SQL
-            StringBuilder sql = new StringBuilder("INSERT INTO Partidas " +
-                "(ID_Partida, Num_Partida, Estado, Hora, Data");
+            // Paso 1: Obtener el siguiente ID de la secuencia
+            PreparedStatement seqStmt = con.prepareStatement("SELECT PARTIDAS_SEQ.NEXTVAL FROM dual");
+            ResultSet seqRs = seqStmt.executeQuery();
+            if (seqRs.next()) {
+                idPartida = seqRs.getInt(1);
+            } else {
+                throw new SQLException("No se pudo obtener el valor NEXTVAL de PARTIDAS_SEQ");
+            }
+            seqRs.close();
+            seqStmt.close();
 
+            // Paso 2: Crear sentencia INSERT
+            StringBuilder sql = new StringBuilder("INSERT INTO Partidas (ID_Partida, Num_Partida, Estado, Hora, Data");
             for (int i = 1; i <= numCasillas; i++) {
                 sql.append(", ID_Casilla_").append(i);
             }
-            sql.append(") VALUES (PARTIDAS_SEQ.NEXTVAL, partidas_seq.CURRVAL, 'EN_CURSO', CURRENT_TIMESTAMP, CURRENT_DATE");
-
+            sql.append(") VALUES (?, ?, 'EN_CURSO', CURRENT_TIMESTAMP, CURRENT_DATE");
             for (int i = 0; i < numCasillas; i++) {
                 sql.append(", ?");
             }
             sql.append(")");
 
+            // Paso 3: Preparar y ejecutar sentencia
             PreparedStatement ps = con.prepareStatement(sql.toString());
+            ps.setInt(1, idPartida); // ID_Partida
+            ps.setInt(2, idPartida); // Num_Partida (reutilizamos mismo ID)
 
             for (int i = 0; i < numCasillas; i++) {
-                ps.setString(i + 1, casillas[i]);
+                ps.setString(i + 3, casillas[i]); // Parámetros desde el índice 3
             }
 
             ps.executeUpdate();
             ps.close();
-
-            // Recuperar el ID de la partida
-            ResultSet rs = select(con, "SELECT MAX(ID_Partida) AS ID FROM Partidas");
-            if (rs.next()) {
-                idPartida = rs.getInt("ID");
-            }
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -273,6 +271,7 @@ public class bbdd {
 
         return idPartida;
     }
+
 
 
     public static int obtenerIdPartida(Connection con, int numPartida) {
