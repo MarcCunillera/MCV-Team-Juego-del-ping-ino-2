@@ -135,7 +135,7 @@ public class bbdd {
 
 
     public static void insertarParticipacion(Connection con, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) throws SQLException {
-        String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos, Dado_Lento, Dado_Rapido, Peces, Bolas_Nieve) " +
+        String sql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, Jugador_Pos_1, Dado_Lento_1, Dado_Rapido_1, Peces_1, Bolas_Nieve_1) " +
                      "VALUES (PARTICIPACIONES_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setInt(1, idPartida);
@@ -326,7 +326,7 @@ public class bbdd {
     //restaurar la lista de pinguinos
     public static List<Pinguino> obtenerPinguinosDePartida(Connection con, int idPartida) {
         List<Pinguino> pinguinos = new ArrayList<>();
-        String query = "SELECT j.id_jugador, j.nickname, p.Jugador_pos, p.dado_Lento, p.dado_Rapido, p.peces, p.Bolas_nieve FROM Jugadores j, Participaciones p WHERE j.id_jugador = p.id_jugador AND p.id_partida";
+        String query = "SELECT j.id_jugador, j.nickname, p.Jugador_pos, p.dado_Lento_1, p.dado_Rapido_1, p.peces_1, p.Bolas_nieve_1 FROM Jugadores j, Participaciones p WHERE j.id_jugador = p.id_jugador AND p.id_partida";
         
         try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setInt(1, idPartida);  // Establecemos el ID de la partida como parámetro
@@ -335,11 +335,11 @@ public class bbdd {
                 while (rs.next()) {
                     int id = rs.getInt("id_jugador");
                     String nombre = rs.getString("nickname");
-                    int posicion = rs.getInt("Jugador_pos");
-                    int dadoLento = rs.getInt("dado_Lento");
-                    int dadoRapido = rs.getInt("dado_Rapido");
-                    int pescado = rs.getInt("peces");
-                    int bolasNieve = rs.getInt("Bolas_nieve");
+                    int posicion = rs.getInt("Jugador_pos_1");
+                    int dadoLento = rs.getInt("dado_Lento_1");
+                    int dadoRapido = rs.getInt("dado_Rapido_1");
+                    int pescado = rs.getInt("peces_1");
+                    int bolasNieve = rs.getInt("Bolas_nieve_1");
                     
                     // Crear el objeto Pinguino con los valores obtenidos
                     Pinguino pinguino = new Pinguino(id, nombre, posicion, dadoLento, dadoRapido, bolasNieve, pescado);
@@ -378,7 +378,7 @@ public class bbdd {
     }
 
     public static void actualizarParticipacion(Connection con, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) throws SQLException {
-        String sql = "UPDATE Participaciones SET Jugador_Pos = ?, Dado_Lento = ?, Dado_Rapido = ?, Peces = ?, Bolas_Nieve = ? WHERE ID_Partida = ? AND ID_Jugador = ?";
+        String sql = "UPDATE Participaciones SET Jugador_Pos_1 = ?, Dado_Lento_1 = ?, Dado_Rapido_1 = ?, Peces_1 = ?, Bolas_Nieve_1 = ? WHERE ID_Partida = ? AND ID_Jugador = ?";
 
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setInt(1, posicion);
