@@ -421,21 +421,96 @@ public class bbdd {
         ps.close();
     }
 
-    public static void actualizarParticipacion(Connection con, int idPartida, int idJugador, int posicion, int dadoLento, int dadoRapido, int peces, int bolasNieve) throws SQLException {
-        String sql = "UPDATE Participaciones SET Jugador_Pos_1 = ?, Dado_Lento_1 = ?, Dado_Rapido_1 = ?, Peces_1 = ?, Bolas_Nieve_1 = ? WHERE ID_Partida = ? AND ID_Jugador = ?";
+    public static void guardarOActualizarParticipacion(Connection con, int idPartida, int idJugador) throws SQLException {
+        // Verifica si ya existe una participación
+        String checkSql = "SELECT COUNT(*) FROM Participaciones WHERE ID_Partida = ? AND ID_Jugador = ?";
+        PreparedStatement checkStmt = con.prepareStatement(checkSql);
+        checkStmt.setInt(1, idPartida);
+        checkStmt.setInt(2, idJugador);
+        ResultSet rs = checkStmt.executeQuery();
+        boolean existe = false;
+        if (rs.next()) {
+            existe = rs.getInt(1) > 0;
+        }
+        rs.close();
+        checkStmt.close();
 
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setInt(1, posicion);
-        ps.setInt(2, dadoLento);
-        ps.setInt(3, dadoRapido);
-        ps.setInt(4, peces);
-        ps.setInt(5, bolasNieve);
-        ps.setInt(6, idPartida);
-        ps.setInt(7, idJugador);
+        // Extrae datos de los pingüinos
+        int[] posiciones = new int[4];
+        int[] dadosLentos = new int[4];
+        int[] dadosRapidos = new int[4];
+        int[] peces = new int[4];
+        int[] bolasNieve = new int[4];
 
-        ps.executeUpdate();
-        ps.close();
+        for (int i = 0; i < 4; i++) {
+            Pinguino p = Pinguino.ListaPinguinos.get(i);
+            posiciones[i] = p.getPosicion();
+            dadosLentos[i] = p.getDadoLento();
+            dadosRapidos[i] = p.getDadoRapido();
+            peces[i] = p.getPescado();
+            bolasNieve[i] = p.getBolasNieve();
+        }
+
+        if (existe) {
+            // UPDATE
+            String updateSql = "UPDATE Participaciones SET "
+                    + "Jugador_Pos_1=?, Jugador_Pos_2=?, Jugador_Pos_3=?, Jugador_Pos_4=?, "
+                    + "Dado_Lento_1=?, Dado_Lento_2=?, Dado_Lento_3=?, Dado_Lento_4=?, "
+                    + "Dado_Rapido_1=?, Dado_Rapido_2=?, Dado_Rapido_3=?, Dado_Rapido_4=?, "
+                    + "Peces_1=?, Peces_2=?, Peces_3=?, Peces_4=?, "
+                    + "Bolas_Nieve_1=?, Bolas_Nieve_2=?, Bolas_Nieve_3=?, Bolas_Nieve_4=? "
+                    + "WHERE ID_Partida=? AND ID_Jugador=?";
+
+            PreparedStatement updateStmt = con.prepareStatement(updateSql);
+            int i = 1;
+            for (int j = 0; j < 4; j++) updateStmt.setInt(i++, posiciones[j]);
+            for (int j = 0; j < 4; j++) updateStmt.setInt(i++, dadosLentos[j]);
+            for (int j = 0; j < 4; j++) updateStmt.setInt(i++, dadosRapidos[j]);
+            for (int j = 0; j < 4; j++) updateStmt.setInt(i++, peces[j]);
+            for (int j = 0; j < 4; j++) updateStmt.setInt(i++, bolasNieve[j]);
+            updateStmt.setInt(i++, idPartida);
+            updateStmt.setInt(i++, idJugador);
+
+            updateStmt.executeUpdate();
+            updateStmt.close();
+        } else {
+        	// Obtener siguiente ID_Participacion
+        	String maxSql = "SELECT NVL(MAX(ID_Participacion), 0) + 1 FROM Participaciones";
+        	Statement maxStmt = con.createStatement();
+        	ResultSet maxRs = maxStmt.executeQuery(maxSql);
+        	int nuevoIdParticipacion = 1;
+        	if (maxRs.next()) {
+        	    nuevoIdParticipacion = maxRs.getInt(1);
+        	}
+        	maxRs.close();
+        	maxStmt.close();
+
+            // INSERT
+            String insertSql = "INSERT INTO Participaciones (ID_Participacion, ID_Partida, ID_Jugador, "
+                    + "Jugador_Pos_1, Jugador_Pos_2, Jugador_Pos_3, Jugador_Pos_4, "
+                    + "Dado_Lento_1, Dado_Lento_2, Dado_Lento_3, Dado_Lento_4, "
+                    + "Dado_Rapido_1, Dado_Rapido_2, Dado_Rapido_3, Dado_Rapido_4, "
+                    + "Peces_1, Peces_2, Peces_3, Peces_4, "
+                    + "Bolas_Nieve_1, Bolas_Nieve_2, Bolas_Nieve_3, Bolas_Nieve_4) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            PreparedStatement insertStmt = con.prepareStatement(insertSql);
+            int i = 1;
+            insertStmt.setInt(i++, nuevoIdParticipacion);
+            insertStmt.setInt(i++, idPartida);
+            insertStmt.setInt(i++, idJugador);
+            for (int j = 0; j < 4; j++) insertStmt.setInt(i++, posiciones[j]);
+            for (int j = 0; j < 4; j++) insertStmt.setInt(i++, dadosLentos[j]);
+            for (int j = 0; j < 4; j++) insertStmt.setInt(i++, dadosRapidos[j]);
+            for (int j = 0; j < 4; j++) insertStmt.setInt(i++, peces[j]);
+            for (int j = 0; j < 4; j++) insertStmt.setInt(i++, bolasNieve[j]);
+
+            insertStmt.executeUpdate();
+            insertStmt.close();
+        }
     }
+
+
 
 
 }
