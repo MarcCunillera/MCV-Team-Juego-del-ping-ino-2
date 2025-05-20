@@ -962,7 +962,7 @@ public class PantallaJuegoController {
     			int col = i % COLUMNS;
     			
     			//añadir las imagenes
-    			Image image = new Image(getClass().getResource("/Resources/oso.png").toExternalForm());
+    			Image image = new Image(getClass().getResource("/Resources/moto.png").toExternalForm());
     			ImageView imageView = new ImageView(image);
     			imageView.setFitWidth(40);
     			imageView.setFitHeight(40);
@@ -980,7 +980,7 @@ public class PantallaJuegoController {
     			int col = i % COLUMNS;
     			
     			//añadir las imagenes
-    			Image image = new Image(getClass().getResource("/Resources/oso.png").toExternalForm());
+    			Image image = new Image(getClass().getResource("/Resources/quebradizo.png").toExternalForm());
     			ImageView imageView = new ImageView(image);
     			imageView.setFitWidth(40);
     			imageView.setFitHeight(40);
@@ -1000,7 +1000,9 @@ public class PantallaJuegoController {
                     url.contains("agujero.png") ||
                     url.contains("trineo.png") ||
                     url.contains("interrogante.png") ||
-                    url.contains("oso.png")
+                    url.contains("oso.png") ||
+                    url.contains("moto.png") ||
+                    url.contains("quebradizo.png")
                 );
             }
             return false;
