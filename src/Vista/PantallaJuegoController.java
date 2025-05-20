@@ -617,28 +617,23 @@ public class PantallaJuegoController {
                             String columna = "ID_Casilla_" + i;
                             String valor = rs.getString(columna);
 
-                            if (valor == null || valor.isBlank()) {
-                                tableroCasillas[i - 1] = null; // o un valor por defecto
-                                continue;
-                            }
-
                             TipoCasilla tipo = null;
 
-                            // Intentar parsear el valor como número (índice)
-                            try {
-                                int index = Integer.parseInt(valor);
-                                // Si es un índice válido del enum
-                                if (index >= 0 && index < TipoCasilla.values().length) {
-                                    tipo = TipoCasilla.values()[index];
-                                } else {
-                                    System.err.println("Índice fuera de rango para casilla " + i + ": " + index);
-                                }
-                            } catch (NumberFormatException e) {
-                                // No es número, intentar parsear como nombre
+                            if (valor == null || valor.isBlank()) {
+                                tipo = TipoCasilla.Normal; // o null si prefieres
+                            } else {
                                 try {
-                                    tipo = TipoCasilla.valueOf(valor);
-                                } catch (IllegalArgumentException ex) {
-                                    System.err.println("Valor inválido para casilla " + i + ": " + valor);
+                                    int index = Integer.parseInt(valor);
+                                    if (index >= 0 && index < TipoCasilla.values().length) {
+                                        tipo = TipoCasilla.values()[index];
+                                    }
+                                } catch (NumberFormatException e) {
+                                    try {
+                                        tipo = TipoCasilla.valueOf(valor);
+                                    } catch (IllegalArgumentException ex) {
+                                        System.err.println("Valor inválido para casilla " + i + ": " + valor);
+                                        tipo = TipoCasilla.Normal;
+                                    }
                                 }
                             }
 
@@ -647,8 +642,8 @@ public class PantallaJuegoController {
                     }
                 }
             }
+
             actualizarRecursos();
-            
             eventos.setText("Tablero restaurado exitosamente.");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -658,53 +653,29 @@ public class PantallaJuegoController {
 
 
 
+
     public void restaurarPinguinos() {
         try {
-            // Recuperar los pingüinos de la base de datos usando el idPartida
-        	String queryPinguinos = "SELECT j.ID_Jugador, j.Nickname, " +
+            String query = "SELECT j.ID_Jugador, j.Nickname, " +
                     "p.Jugador_pos_1, p.Jugador_pos_2, p.Jugador_pos_3, p.Jugador_pos_4, " +
                     "p.dado_lento_1, p.dado_lento_2, p.dado_lento_3, p.dado_lento_4, " +
                     "p.dado_rapido_1, p.dado_rapido_2, p.dado_rapido_3, p.dado_rapido_4, " +
                     "p.peces_1, p.peces_2, p.peces_3, p.peces_4, " +
                     "p.bolas_nieve_1, p.bolas_nieve_2, p.bolas_nieve_3, p.bolas_nieve_4 " +
-                    "FROM Jugadores j " +
-                    "INNER JOIN Participaciones p ON j.id_jugador = p.id_jugador " +
-                    "WHERE p.id_partida = ?";
+                    "FROM Participaciones p " +
+                    "JOIN Jugadores j ON j.ID_Jugador = p.ID_Jugador " +
+                    "WHERE p.ID_Partida = ?";
 
-            try (PreparedStatement stmt = con.prepareStatement(queryPinguinos)) {
-                stmt.setInt(1, idPartida); // Usamos idPartida para filtrar los pingüinos
-
+            try (PreparedStatement stmt = con.prepareStatement(query)) {
+                stmt.setInt(1, idPartida);
                 try (ResultSet rs = stmt.executeQuery()) {
-                	pingus.clear(); //borrar los pinguinos que hay
-                    while (rs.next()) {
-                        int id = rs.getInt("ID_Jugador");
-                        String nombre = rs.getString("Nickname");
-                        int posicion1 = rs.getInt("Jugador_pos_1");
-                        int posicion2 = rs.getInt("Jugador_pos_2");
-                        int posicion3 = rs.getInt("Jugador_pos_3");
-                        int posicion4 = rs.getInt("Jugador_pos_4");
-                        int dadoLento1 = rs.getInt("dado_lento_1");
-                        int dadoLento2 = rs.getInt("dado_lento_2");
-                        int dadoLento3 = rs.getInt("dado_lento_3");
-                        int dadoLento4 = rs.getInt("dado_lento_4");
-                        int dadoRapido1 = rs.getInt("dado_rapido_1");
-                        int dadoRapido2 = rs.getInt("dado_rapido_2");
-                        int dadoRapido3 = rs.getInt("dado_rapido_3");
-                        int dadoRapido4 = rs.getInt("dado_rapido_4");
-                        int pescado1 = rs.getInt("peces_1");
-                        int pescado2 = rs.getInt("peces_2");
-                        int pescado3 = rs.getInt("peces_3");
-                        int pescado4 = rs.getInt("peces_4");
-                        int bolasNieve1 = rs.getInt("bolas_nieve_1");
-                        int bolasNieve2 = rs.getInt("bolas_nieve_2");
-                        int bolasNieve3 = rs.getInt("bolas_nieve_3");
-                        int bolasNieve4 = rs.getInt("bolas_nieve_4");
+                    pingus.clear(); // Limpia la lista actual antes de restaurar
 
-                        // Crear el pingüino y añadirlo a la lista
-                        new Pinguino(1, "Azul", posicion1, dadoLento1, dadoRapido1, pescado1, bolasNieve1);
-                        new Pinguino(2, "Rojo", posicion2, dadoLento2, dadoRapido2, pescado2, bolasNieve2);
-                        new Pinguino(3, "Verde", posicion3, dadoLento3, dadoRapido3, pescado3, bolasNieve3);
-                        new Pinguino(4, "Amarillo", posicion4, dadoLento4, dadoRapido4, pescado4, bolasNieve4);
+                    if (rs.next()) {
+                        new Pinguino(1, "Azul", rs.getInt("Jugador_pos_1"), rs.getInt("dado_lento_1"), rs.getInt("dado_rapido_1"), rs.getInt("peces_1"), rs.getInt("bolas_nieve_1"));
+                        new Pinguino(2, "Rojo", rs.getInt("Jugador_pos_2"), rs.getInt("dado_lento_2"), rs.getInt("dado_rapido_2"), rs.getInt("peces_2"), rs.getInt("bolas_nieve_2"));
+                        new Pinguino(3, "Verde", rs.getInt("Jugador_pos_3"), rs.getInt("dado_lento_3"), rs.getInt("dado_rapido_3"), rs.getInt("peces_3"), rs.getInt("bolas_nieve_3"));
+                        new Pinguino(4, "Amarillo", rs.getInt("Jugador_pos_4"), rs.getInt("dado_lento_4"), rs.getInt("dado_rapido_4"), rs.getInt("peces_4"), rs.getInt("bolas_nieve_4"));
                     }
                 }
             }
@@ -715,6 +686,7 @@ public class PantallaJuegoController {
             eventos.setText("Error al restaurar los pingüinos.");
         }
     }
+
 
     
     public void actualizarRecursos() {
@@ -796,21 +768,19 @@ public class PantallaJuegoController {
     }
     
     //update de todos los pinguinos del tablero al cargar juego
-    private void updateAllPenguinPosition(){
-    	int tourn = 0;
-    	for (int i = 0; i < 4; i++) {
-			Pinguino pingu = pingus.get(tourn);
-			Circle pinguCircle = getPinguinCircle(tourn);
-			
-			int row = pingu.getPosicion() / 5; //5 X 10 grid
-	        int col = pingu.getPosicion() % 5;
-	        
-	        GridPane.setRowIndex(pinguCircle, row);
-	        GridPane.setColumnIndex(pinguCircle, col);
-	        
-	        tourn++;
-		}
+    private void updateAllPenguinPosition() {
+        for (int i = 0; i < pingus.size(); i++) {
+            Pinguino pingu = pingus.get(i);
+            Circle pinguCircle = getPinguinCircle(i);
+
+            int row = pingu.getPosicion() / 5; // 5 columnas
+            int col = pingu.getPosicion() % 5;
+
+            GridPane.setRowIndex(pinguCircle, row);
+            GridPane.setColumnIndex(pinguCircle, col);
+        }
     }
+
     
     
     //update final en caso de caer en trampas
