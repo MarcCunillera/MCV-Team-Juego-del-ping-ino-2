@@ -594,62 +594,58 @@ public class PantallaJuegoController {
     }
 
 
-    public void restaurarTablero() {
-        try {
-            String queryCasillas = "SELECT " +
-                    "ID_Casilla_1, ID_Casilla_2, ID_Casilla_3, ID_Casilla_4, ID_Casilla_5, " +
-                    "ID_Casilla_6, ID_Casilla_7, ID_Casilla_8, ID_Casilla_9, ID_Casilla_10, " +
-                    "ID_Casilla_11, ID_Casilla_12, ID_Casilla_13, ID_Casilla_14, ID_Casilla_15, " +
-                    "ID_Casilla_16, ID_Casilla_17, ID_Casilla_18, ID_Casilla_19, ID_Casilla_20, " +
-                    "ID_Casilla_21, ID_Casilla_22, ID_Casilla_23, ID_Casilla_24, ID_Casilla_25, " +
-                    "ID_Casilla_26, ID_Casilla_27, ID_Casilla_28, ID_Casilla_29, ID_Casilla_30, " +
-                    "ID_Casilla_31, ID_Casilla_32, ID_Casilla_33, ID_Casilla_34, ID_Casilla_35, " +
-                    "ID_Casilla_36, ID_Casilla_37, ID_Casilla_38, ID_Casilla_39, ID_Casilla_40, " +
-                    "ID_Casilla_41, ID_Casilla_42, ID_Casilla_43, ID_Casilla_44, ID_Casilla_45, " +
-                    "ID_Casilla_46, ID_Casilla_47, ID_Casilla_48, ID_Casilla_49, ID_Casilla_50 " +
-                    "FROM Partidas WHERE ID_Partida = ?";
+    private void restaurarTablero() throws SQLException {
+        String query = "SELECT ID_CASILLA_1, ID_CASILLA_2, ID_CASILLA_3, ID_CASILLA_4, ID_CASILLA_5,\r\n"
+        		+ "       ID_CASILLA_6, ID_CASILLA_7, ID_CASILLA_8, ID_CASILLA_9, ID_CASILLA_10,\r\n"
+        		+ "       ID_CASILLA_11, ID_CASILLA_12, ID_CASILLA_13, ID_CASILLA_14, ID_CASILLA_15,\r\n"
+        		+ "       ID_CASILLA_16, ID_CASILLA_17, ID_CASILLA_18, ID_CASILLA_19, ID_CASILLA_20,\r\n"
+        		+ "       ID_CASILLA_21, ID_CASILLA_22, ID_CASILLA_23, ID_CASILLA_24, ID_CASILLA_25,\r\n"
+        		+ "       ID_CASILLA_26, ID_CASILLA_27, ID_CASILLA_28, ID_CASILLA_29, ID_CASILLA_30,\r\n"
+        		+ "       ID_CASILLA_31, ID_CASILLA_32, ID_CASILLA_33, ID_CASILLA_34, ID_CASILLA_35,\r\n"
+        		+ "       ID_CASILLA_36, ID_CASILLA_37, ID_CASILLA_38, ID_CASILLA_39, ID_CASILLA_40,\r\n"
+        		+ "       ID_CASILLA_41, ID_CASILLA_42, ID_CASILLA_43, ID_CASILLA_44, ID_CASILLA_45,\r\n"
+        		+ "       ID_CASILLA_46, ID_CASILLA_47, ID_CASILLA_48, ID_CASILLA_49, ID_CASILLA_50\r\n"
+        		+ "FROM PARTIDAS\r\n"
+        		+ "WHERE ID_PARTIDA = ?";
+        PreparedStatement stmt = con.prepareStatement(query);
+        stmt.setInt(1, idPartida);
+        ResultSet rs = stmt.executeQuery();
 
-            try (PreparedStatement stmt = con.prepareStatement(queryCasillas)) {
-                stmt.setInt(1, idPartida);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        for (int i = 1; i <= 50; i++) {
-                            String columna = "ID_Casilla_" + i;
-                            String valor = rs.getString(columna);
+        if (rs.next()) {
+            for (int i = 1; i <= 50; i++) {
+                String columna = "ID_Casilla_" + i;
+                String valor = rs.getString(columna);
 
-                            TipoCasilla tipo = null;
+                TipoCasilla tipo;
 
-                            if (valor == null || valor.isBlank()) {
-                                tipo = TipoCasilla.Normal; // o null si prefieres
-                            } else {
-                                try {
-                                    int index = Integer.parseInt(valor);
-                                    if (index >= 0 && index < TipoCasilla.values().length) {
-                                        tipo = TipoCasilla.values()[index];
-                                    }
-                                } catch (NumberFormatException e) {
-                                    try {
-                                        tipo = TipoCasilla.valueOf(valor);
-                                    } catch (IllegalArgumentException ex) {
-                                        System.err.println("Valor inválido para casilla " + i + ": " + valor);
-                                        tipo = TipoCasilla.Normal;
-                                    }
-                                }
-                            }
-
-                            tableroCasillas[i - 1] = tipo;
-                        }
+                try {
+                    // Intenta interpretar el valor como índice
+                    int index = Integer.parseInt(valor);
+                    tipo = TipoCasilla.values()[index];
+                } catch (NumberFormatException e) {
+                    // Si falla, asume que es un nombre del enum
+                    try {
+                        tipo = TipoCasilla.valueOf(valor);
+                    } catch (IllegalArgumentException ex) {
+                        // Valor desconocido: puedes asignar uno por defecto o lanzar excepción
+                        tipo = TipoCasilla.Normal; // por ejemplo
+                        System.err.println("Valor desconocido para " + columna + ": " + valor);
                     }
                 }
-            }
 
-            actualizarRecursos();
-            eventos.setText("Tablero restaurado exitosamente.");
-        } catch (SQLException e) {
-            e.printStackTrace();
-            eventos.setText("Error al restaurar el tablero.");
+                tableroCasillas[i - 1] = tipo;
+                eliminarImagenesEspeciales();
+                mostrarImagenesInterrogante();
+                mostrarImagenesOso();
+                mostrarImagenesTrineo();
+                mostrarImgAgujero();
+            }
         }
+
+        rs.close();
+        stmt.close();
     }
+
 
 
 
