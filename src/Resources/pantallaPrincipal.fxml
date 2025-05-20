@@ -112,7 +112,7 @@
                               <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/pingu%20verde.png" />
                            </image>
                         </ImageView>
-                        <ComboBox id="1" layoutX="207.0" layoutY="224.0" prefHeight="16.0" prefWidth="113.0" promptText="Color"/>		
+                        <ComboBox id="1" layoutX="215.0" layoutY="224.0" prefHeight="16.0" prefWidth="113.0" promptText="Color" />		
                      </children>
                   </Group>
                </children>
