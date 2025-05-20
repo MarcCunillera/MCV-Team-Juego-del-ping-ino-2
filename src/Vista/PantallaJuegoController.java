@@ -178,31 +178,6 @@ public class PantallaJuegoController {
         pingus.add(new Pinguino(4, "Amarillo", 0, 0, 0, 0, 0));
         
         handleNewGame();
-        
-        //habilitar o deshabilitar botones
-        turno = (turno + 1) % pingus.size();
-    	Pinguino pingu = pingus.get(turno);
-    	
-    	if (pingu.getDadoLento() <= 0) {
-    		lento.setDisable(true);
-    	} else {
-    		lento.setDisable(false);
-    	}
-    	if (pingu.getDadoRapido() <= 0) {
-    		rapido.setDisable(true);
-    	} else {
-    		rapido.setDisable(false);
-    	}
-    	if(pingu.getPescado() <= 0) {
-    		peces.setDisable(true);
-    	} else {
-    		peces.setDisable(false);
-    	}
-    	if(pingu.getBolasNieve() <= 0) {
-    		nieve.setDisable(true);
-    	} else {
-    		nieve.setDisable(false);
-    	}
     }
     
     //inicializar tablero
@@ -584,6 +559,33 @@ public class PantallaJuegoController {
             e.printStackTrace();
             eventos.setText("Error al crear nueva partida.");
         }
+        
+        //habilitar o deshabilitar botones
+        turno = (turno + 1) % pingus.size();
+    	Pinguino pingu = pingus.get(turno);
+    	
+    	if (pingu.getDadoLento() <= 0) {
+    		lento.setDisable(true);
+    	} else {
+    		lento.setDisable(false);
+    	}
+    	if (pingu.getDadoRapido() <= 0) {
+    		rapido.setDisable(true);
+    	} else {
+    		rapido.setDisable(false);
+    	}
+    	if(pingu.getPescado() <= 0) {
+    		peces.setDisable(true);
+    	} else {
+    		peces.setDisable(false);
+    	}
+    	if(pingu.getBolasNieve() <= 0) {
+    		nieve.setDisable(true);
+    	} else {
+    		nieve.setDisable(false);
+    	}
+    	
+    	//pingus y tablero
         alInicioNew();
         iniciarTablero();
     }
