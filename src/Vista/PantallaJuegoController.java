@@ -497,7 +497,7 @@ public class PantallaJuegoController {
                         idJugador = bbdd.obtenerIdJugador(con, pingu.getNombre());
                     }
                     
-                    bbdd.guardarOActualizarParticipacion(
+                    bbdd.guardarOActualizarParticipacionUnica(
                         con, idPartida, idJugador
                     );
                 }
