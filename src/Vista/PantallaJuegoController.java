@@ -318,7 +318,7 @@ public class PantallaJuegoController {
     		        }
     		    }
     		} else {
-    		    boolean dadoRapido = !rn.nextBoolean() && rn.nextInt(4) + 1 == 1;
+    		    boolean dadoRapido = !rn.nextBoolean() && rn.nextInt(3) + 1 == 1;
 
     		    if (dadoRapido) {
     		        // Dado Rápido
@@ -377,7 +377,15 @@ public class PantallaJuegoController {
     		
     		break;
     	case Moto:
+    		int deMotoATrineo = encontrarSiguienteTrineo(posicion);
     		
+    		if(deMotoATrineo > posicion) {
+    			pingu.setPosicion(deMotoATrineo);
+    			finalUpdatePosition();
+    			eventos.setText("Avanzas al siguiente Treino");
+    		} else {
+    			eventos.setText("Te encuentras en el último trineo");
+    		}
     		break;
     	}
     	//saltar turno al acabar de verificar la casilla
