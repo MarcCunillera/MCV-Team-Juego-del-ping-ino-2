@@ -492,19 +492,26 @@ public class bbdd {
                     + "Dado_Rapido_1, Dado_Rapido_2, Dado_Rapido_3, Dado_Rapido_4, "
                     + "Peces_1, Peces_2, Peces_3, Peces_4, "
                     + "Bolas_Nieve_1, Bolas_Nieve_2, Bolas_Nieve_3, Bolas_Nieve_4) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             PreparedStatement insertStmt = con.prepareStatement(insertSql);
+            // 23 parámetros a setear (3 + 4*5)
+            int totalParams = 3 + 4 * 5; // 23
             int i = 1;
+
             insertStmt.setInt(i++, nuevoIdParticipacion);
             insertStmt.setInt(i++, idPartida);
             insertStmt.setInt(i++, idJugador);
+
             for (int j = 0; j < 4; j++) insertStmt.setInt(i++, posiciones[j]);
             for (int j = 0; j < 4; j++) insertStmt.setInt(i++, dadosLentos[j]);
             for (int j = 0; j < 4; j++) insertStmt.setInt(i++, dadosRapidos[j]);
             for (int j = 0; j < 4; j++) insertStmt.setInt(i++, peces[j]);
             for (int j = 0; j < 4; j++) insertStmt.setInt(i++, bolasNieve[j]);
 
+            if(i-1 != totalParams) {
+                throw new SQLException("Número incorrecto de parámetros seteados: " + (i-1) + ", esperado: " + totalParams);
+            }
             insertStmt.executeUpdate();
             insertStmt.close();
         }
