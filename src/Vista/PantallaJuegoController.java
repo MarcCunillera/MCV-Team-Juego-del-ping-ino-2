@@ -148,6 +148,10 @@ public class PantallaJuegoController {
 
     
     private int turno = 0;
+    private int saltarTurnoP1;
+    private int saltarTurnoP2;
+    private int saltarTurnoP3;
+    private int saltarTurnoP4;
     private ArrayList<Pinguino> pingus = new ArrayList<>();
     private Connection con;
     private int idPartida;
@@ -421,11 +425,30 @@ public class PantallaJuegoController {
     		eventos.setText("Casilla normal, todo tranquilo");
     		break;
     	case Quebradizo:
-    		int numBolas = pingu.getBolasNieve();
-    		int numDadoL = pingu.getDadoLento();
-    		int numDadoR = pingu.getDadoRapido();
-    		int numPeces = pingu.getPescado();
+    		int sum = pingu.getBolasNieve() + pingu.getDadoLento() + pingu.getDadoRapido() + pingu.getPescado();
     		
+    		if (sum > 5) {
+    			eventos.setText("El pingu: " + pingu.getNombre() + " vuelve al inicio");
+    			pingu.setPosicion(0);
+    		} else if (sum < 5) {
+    			switch(turno) {
+    			case 0:
+    				saltarTurnoP1++;
+    				break;
+    			case 1:
+    				saltarTurnoP2++;
+    				break;
+    			case 2:
+    				saltarTurnoP3++;
+    				break;
+    			case 4:
+    				saltarTurnoP4++;
+    				break;
+    			}
+    			eventos.setText("El pingu: " + pingu.getNombre() + " pierde un turno");
+    		} else if(sum == 0) {
+    			eventos.setText("El pingu: " + pingu.getNombre() + " no tiene objetos y pasa sin problema");
+    		}
     		break;
     	case Moto:
     		int deMotoATrineo = encontrarSiguienteTrineo(posicion);
