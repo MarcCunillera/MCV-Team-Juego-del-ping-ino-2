@@ -2,6 +2,7 @@ package Vista;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.Scene;
@@ -27,12 +28,17 @@ public class PantallaPrincipalController {
 
     @FXML
     private Button registerButton;
+    
+    @FXML
+    private ComboBox<String> comboBox;
+
 
     private Connection con;
 
     public void initialize() {
         // Se conecta a la base de datos al cargar la interfaz
         con = bbdd.conectarBaseDatos();
+        comboBox.getItems().addAll("Rojo", "Verde", "Azul", "Amarillo");
     }
 
     @FXML
