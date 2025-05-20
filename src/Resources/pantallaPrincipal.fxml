@@ -115,13 +115,13 @@
                         <ComboBox id="1" layoutX="207.0" layoutY="224.0" prefHeight="16.0" prefWidth="113.0" promptText="Color">
                         	<items>
                         		<FXCollections fx:factory="observableArrayList">
-            						<String fx:value="Rojo" />
-            						<String fx:value="Verde" />
-            						<String fx:value="Azul" />
-            						<String fx:value="Amarillo" />
-        						</FXCollections>
-        					</items>
-						</ComboBox>			
+            						   <String fx:value="Rojo" />
+            						   <String fx:value="Verde" />
+            						   <String fx:value="Azul" />
+            						   <String fx:value="Amarillo" />
+        						      </FXCollections>
+        					      </items>
+						      </ComboBox>			
                      </children>
                   </Group>
                </children>
