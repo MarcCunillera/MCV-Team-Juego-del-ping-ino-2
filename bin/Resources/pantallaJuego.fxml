@@ -80,9 +80,9 @@
                               <Image url="@../../../../ImagenesTablero/Fondo_Hielo.png" />
                            </image>
                         </ImageView>
-                        <Text fx:id="dadoResultText" layoutX="14.0" layoutY="180.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Ha salido: " AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="145.46875">
+                        <Text fx:id="dadoResultText" layoutX="23.0" layoutY="173.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Ha salido: " AnchorPane.leftAnchor="23.0" AnchorPane.topAnchor="147.1015625">
                            <font>
-                              <Font size="32.0" />
+                              <Font size="24.0" />
                            </font>
                         </Text>
                         <Button fx:id="dado" layoutX="60.0" layoutY="199.0" mnemonicParsing="false" onAction="#handleDado" text="Dado" AnchorPane.leftAnchor="60.0" AnchorPane.topAnchor="199.0">
