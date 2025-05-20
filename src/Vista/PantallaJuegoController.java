@@ -200,8 +200,8 @@ public class PantallaJuegoController {
     	mostrarImagenesInterrogante();
     	mostrarImagenesOso();
     	mostrarImagenesTrineo();
-    	mostrarImagenesMoto();
     	mostrarImagenesQuebradizo();
+    	mostrarImagenesMoto();
     }
     
     //método para avanzar turno
@@ -372,6 +372,12 @@ public class PantallaJuegoController {
     		break;
     	case Normal:
     		eventos.setText("Casilla normal, todo tranquilo");
+    		break;
+    	case Quebradizo:
+    		
+    		break;
+    	case Moto:
+    		
     		break;
     	}
     	//saltar turno al acabar de verificar la casilla
@@ -957,7 +963,7 @@ public class PantallaJuegoController {
     //imagen moto
     private void mostrarImagenesMoto() {
     	for(int i = 0; i < tableroCasillas.length; i++) {
-    		if(tableroCasillas[i] == TipoCasilla.Oso) {
+    		if(tableroCasillas[i] == TipoCasilla.Moto) {
     			int row = i / COLUMNS;
     			int col = i % COLUMNS;
     			
@@ -975,7 +981,7 @@ public class PantallaJuegoController {
     //imagen suelo quebradizo
     private void mostrarImagenesQuebradizo() {
     	for(int i = 0; i < tableroCasillas.length; i++) {
-    		if(tableroCasillas[i] == TipoCasilla.Oso) {
+    		if(tableroCasillas[i] == TipoCasilla.Quebradizo) {
     			int row = i / COLUMNS;
     			int col = i % COLUMNS;
     			
