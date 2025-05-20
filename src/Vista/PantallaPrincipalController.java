@@ -29,16 +29,11 @@ public class PantallaPrincipalController {
     @FXML
     private Button registerButton;
     
-    @FXML
-    private ComboBox<String> comboBox;
-
-
     private Connection con;
 
     public void initialize() {
         // Se conecta a la base de datos al cargar la interfaz
         con = bbdd.conectarBaseDatos();
-        comboBox.getItems().addAll("Rojo", "Verde", "Azul", "Amarillo");
     }
 
     @FXML
