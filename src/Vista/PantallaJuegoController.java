@@ -105,6 +105,8 @@ public class PantallaJuegoController {
     	Oso, 
     	Trineo,
     	Interrogante,
+    	Moto,
+    	Quebradizo,
     	Meta
     }
     
@@ -183,6 +185,8 @@ public class PantallaJuegoController {
     	colocarCasillasEspeciales(TipoCasilla.Oso, 3);
     	colocarCasillasEspeciales(TipoCasilla.Interrogante, 7);
     	colocarCasillasEspeciales(TipoCasilla.Trineo, 4);
+    	colocarCasillasEspeciales(TipoCasilla.Quebradizo, 2);
+    	colocarCasillasEspeciales(TipoCasilla.Moto, 1);
     	
     	//meter casilla inicio y fin (fijas)
     	tableroCasillas[0] = TipoCasilla.Normal;
@@ -196,6 +200,8 @@ public class PantallaJuegoController {
     	mostrarImagenesInterrogante();
     	mostrarImagenesOso();
     	mostrarImagenesTrineo();
+    	mostrarImagenesMoto();
+    	mostrarImagenesQuebradizo();
     }
     
     //método para avanzar turno
@@ -639,6 +645,8 @@ public class PantallaJuegoController {
                 mostrarImagenesOso();
                 mostrarImagenesTrineo();
                 mostrarImgAgujero();
+                mostrarImagenesMoto();
+                mostrarImagenesQuebradizo();
             }
         }
 
@@ -946,7 +954,42 @@ public class PantallaJuegoController {
     	}
     }
     
-
+    //imagen moto
+    private void mostrarImagenesMoto() {
+    	for(int i = 0; i < tableroCasillas.length; i++) {
+    		if(tableroCasillas[i] == TipoCasilla.Oso) {
+    			int row = i / COLUMNS;
+    			int col = i % COLUMNS;
+    			
+    			//añadir las imagenes
+    			Image image = new Image(getClass().getResource("/Resources/oso.png").toExternalForm());
+    			ImageView imageView = new ImageView(image);
+    			imageView.setFitWidth(40);
+    			imageView.setFitHeight(40);
+    			imageView.setPreserveRatio(true);
+    			tablero.add(imageView, col, row);
+    		}
+    	}
+    }
+    
+    //imagen suelo quebradizo
+    private void mostrarImagenesQuebradizo() {
+    	for(int i = 0; i < tableroCasillas.length; i++) {
+    		if(tableroCasillas[i] == TipoCasilla.Oso) {
+    			int row = i / COLUMNS;
+    			int col = i % COLUMNS;
+    			
+    			//añadir las imagenes
+    			Image image = new Image(getClass().getResource("/Resources/oso.png").toExternalForm());
+    			ImageView imageView = new ImageView(image);
+    			imageView.setFitWidth(40);
+    			imageView.setFitHeight(40);
+    			imageView.setPreserveRatio(true);
+    			tablero.add(imageView, col, row);
+    		}
+    	}
+    }
+    
     //borrar las imagenes residuales
     private void eliminarImagenesEspeciales() {
         tablero.getChildren().removeIf(node -> {
