@@ -33,12 +33,15 @@
 -->
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.Group?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
@@ -56,12 +59,12 @@
 	    <menus>
 	        <Menu mnemonicParsing="false" text="File">
 	            <items>
-	                <MenuItem fx:id="newGame" mnemonicParsing="false" text="New" onAction="#handleNewGame"/>
-	                <SeparatorMenuItem mnemonicParsing="false"/>
-	                <MenuItem fx:id="saveGame" mnemonicParsing="false" text="Save" onAction="#handleSaveGame"/>
-	                <MenuItem fx:id="loadGame" mnemonicParsing="false" text="Load" onAction="#handleLoadGame"/>
-	                <SeparatorMenuItem mnemonicParsing="false"/>
-	                <MenuItem fx:id="quitGame" mnemonicParsing="false" text="Quit" onAction="#handleQuitGame"/>
+	                <MenuItem fx:id="newGame" mnemonicParsing="false" onAction="#handleNewGame" text="New" />
+	                <SeparatorMenuItem mnemonicParsing="false" />
+	                <MenuItem fx:id="saveGame" mnemonicParsing="false" onAction="#handleSaveGame" text="Save" />
+	                <MenuItem fx:id="loadGame" mnemonicParsing="false" onAction="#handleLoadGame" text="Load" />
+	                <SeparatorMenuItem mnemonicParsing="false" />
+	                <MenuItem fx:id="quitGame" mnemonicParsing="false" onAction="#handleQuitGame" text="Quit" />
 	            </items>
 	        </Menu>
 	    </menus>
@@ -70,64 +73,104 @@
          <bottom>
             <HBox BorderPane.alignment="CENTER">
                <children>
-                  <AnchorPane minHeight="200.0" minWidth="300.0">
+                  <AnchorPane minHeight="200.0" minWidth="213.0" prefHeight="315.0" prefWidth="213.0">
                      <children>
-                        <Text fx:id="dadoResultText" strokeType="OUTSIDE" strokeWidth="0.0" text="Ha salido: " AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="30.0">
+                        <ImageView fitHeight="815.0" fitWidth="1280.0" layoutY="-500.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTablero/Fondo_Hielo.png" />
+                           </image>
+                        </ImageView>
+                        <Text fx:id="dadoResultText" layoutX="14.0" layoutY="180.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Ha salido: " AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="145.46875">
                            <font>
                               <Font size="32.0" />
                            </font>
                         </Text>
-                        <Button fx:id="dado" layoutY="58.0" mnemonicParsing="false" onAction="#handleDado" text="Dado" AnchorPane.leftAnchor="110.0" AnchorPane.topAnchor="100.0">
+                        <Button fx:id="dado" layoutX="60.0" layoutY="199.0" mnemonicParsing="false" onAction="#handleDado" text="Dado" AnchorPane.leftAnchor="60.0" AnchorPane.topAnchor="199.0">
                            <font>
                               <Font size="25.0" />
                            </font>
                         </Button>
+                        <ImageView fitHeight="116.0" fitWidth="144.0" layoutX="35.0" layoutY="20.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTablero/Dados.png" />
+                           </image>
+                        </ImageView>
                      </children>
                   </AnchorPane>
                   <ScrollPane minHeight="200.0" minWidth="680.0" vbarPolicy="NEVER">
                     <content>
-                      <AnchorPane>
+                      <AnchorPane prefHeight="311.0" prefWidth="833.0">
                            <children>
-                              <Text fx:id="rapido_t" strokeType="OUTSIDE" strokeWidth="0.0" text="Dado rápido: 0" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="30.0">
+                              <ImageView fitHeight="607.0" fitWidth="832.0" layoutY="-295.0">
+                                 <image>
+                                    <Image url="@../../../../ImagenesTablero/Fondo_Hielo.png" />
+                                 </image>
+                              </ImageView>
+                              <ImageView fitHeight="374.0" fitWidth="833.0" layoutY="-19.0">
+                                 <image>
+                                    <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/montaña.png" />
+                                 </image>
+                              </ImageView>
+                              <Text fx:id="rapido_t" layoutX="29.0" layoutY="58.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Dado rápido: 0" AnchorPane.leftAnchor="29.0" AnchorPane.topAnchor="32.1015625">
                                  <font>
-                                    <Font size="30.0" />
+                                    <Font size="24.0" />
                                  </font>
                               </Text>
-                              <Text fx:id="lento_t" strokeType="OUTSIDE" strokeWidth="0.0" text="Dado lento: 0" AnchorPane.leftAnchor="250.0" AnchorPane.topAnchor="30.0">
+                              <Text fx:id="lento_t" layoutX="251.0" layoutY="57.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Dado lento: 0" AnchorPane.leftAnchor="251.0" AnchorPane.topAnchor="31.1015625">
                                  <font>
-                                    <Font size="30.0" />
+                                    <Font size="24.0" />
                                  </font>
                               </Text>
-                              <Text fx:id="peces_t" strokeType="OUTSIDE" strokeWidth="0.0" text="Peces: 0" AnchorPane.leftAnchor="500.0" AnchorPane.topAnchor="30.0">
+                              <Text fx:id="peces_t" layoutX="469.0" layoutY="57.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Peces: 0" AnchorPane.leftAnchor="469.0" AnchorPane.topAnchor="31.1015625">
                                  <font>
-                                    <Font size="30.0" />
+                                    <Font size="24.0" />
                                  </font>
                               </Text>
-                              <Text fx:id="nieve_t" strokeType="OUTSIDE" strokeWidth="0.0" text="Bolas de nieve: 0" AnchorPane.leftAnchor="750.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="30.0">
+                              <Text fx:id="nieve_t" layoutX="634.0" layoutY="56.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Bolas de nieve: 0" AnchorPane.leftAnchor="634.0" AnchorPane.rightAnchor="126.43359375" AnchorPane.topAnchor="30.1015625">
                                  <font>
-                                    <Font size="30.0" />
+                                    <Font size="24.0" />
                                  </font>
                               </Text>
-                              <Button fx:id="rapido" mnemonicParsing="false" onAction="#handleRapido" text="Usar" AnchorPane.leftAnchor="55.0" AnchorPane.topAnchor="90.0">
+                              <Button fx:id="rapido" layoutX="72.0" layoutY="196.0" mnemonicParsing="false" onAction="#handleRapido" prefHeight="25.0" prefWidth="71.0" text="Usar" AnchorPane.leftAnchor="72.0" AnchorPane.topAnchor="196.0">
                                  <font>
-                                    <Font size="30.0" />
+                                    <Font size="18.0" />
                                  </font>
                               </Button>
-                              <Button fx:id="lento" layoutX="65.0" layoutY="100.0" mnemonicParsing="false" onAction="#handleLento" text="Usar" AnchorPane.leftAnchor="290.0" AnchorPane.topAnchor="90.0">
+                              <Button fx:id="lento" layoutX="290.0" layoutY="196.0" mnemonicParsing="false" onAction="#handleLento" prefHeight="39.0" prefWidth="65.0" text="Usar" AnchorPane.leftAnchor="290.0" AnchorPane.topAnchor="196.0">
                                  <font>
-                                    <Font size="30.0" />
+                                    <Font size="18.0" />
                                  </font>
                               </Button>
-                              <Button fx:id="peces" layoutX="75.0" layoutY="110.0" mnemonicParsing="false" onAction="#handlePeces" text="Usar" AnchorPane.leftAnchor="505.0" AnchorPane.topAnchor="90.0">
+                              <Button fx:id="peces" layoutX="481.0" layoutY="196.0" mnemonicParsing="false" onAction="#handlePeces" text="Usar" AnchorPane.leftAnchor="481.0" AnchorPane.topAnchor="196.0">
                                  <font>
-                                    <Font size="30.0" />
+                                    <Font size="18.0" />
                                  </font>
                               </Button>
-                              <Button fx:id="nieve" layoutX="85.0" layoutY="120.0" mnemonicParsing="false" text="Usar" AnchorPane.leftAnchor="810.0" AnchorPane.topAnchor="90.0">
+                              <Button fx:id="nieve" layoutX="692.0" layoutY="196.0" mnemonicParsing="false" text="Usar" AnchorPane.leftAnchor="692.0" AnchorPane.topAnchor="196.0">
                                  <font>
-                                    <Font size="30.0" />
+                                    <Font size="18.0" />
                                  </font>
                               </Button>
+                              <ImageView fitHeight="110.0" fitWidth="127.0" layoutX="448.0" layoutY="70.0">
+                                 <image>
+                                    <Image url="@../../../../ImagenesTablero/peces.png" />
+                                 </image>
+                              </ImageView>
+                              <ImageView fitHeight="104.0" fitWidth="105.0" layoutX="270.0" layoutY="73.0">
+                                 <image>
+                                    <Image url="@../../../../ImagenesTablero/dado1.png" />
+                                 </image>
+                              </ImageView>
+                              <ImageView fitHeight="92.0" fitWidth="88.0" layoutX="64.0" layoutY="79.0">
+                                 <image>
+                                    <Image url="@../../../../ImagenesTablero/dado2.png" />
+                                 </image>
+                              </ImageView>
+                              <ImageView fitHeight="98.0" fitWidth="107.0" layoutX="669.0" layoutY="76.0">
+                                 <image>
+                                    <Image url="@../../../../ImagenesTablero/BolaNiev.png" />
+                                 </image>
+                              </ImageView>
                            </children>
                         </AnchorPane>
                     </content>
@@ -135,13 +178,18 @@
                         <Insets />
                      </HBox.margin>
                   </ScrollPane>
-                  <AnchorPane minHeight="200.0" minWidth="300.0">
+                  <AnchorPane minHeight="200.0" minWidth="61.0" prefHeight="315.0" prefWidth="236.0">
                      <children>
-                        <Text fx:id="eventos" strokeType="OUTSIDE" strokeWidth="0.0" text="Evento ocurrido" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="30.0">
+                        <Text fx:id="eventos" layoutX="48.0" layoutY="152.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Evento ocurrido" wrappingWidth="132.9736328125" AnchorPane.leftAnchor="48.0" AnchorPane.topAnchor="132.576171875">
                            <font>
                               <Font size="18.0" />
                            </font>
                         </Text>
+                        <ImageView fitHeight="110.0" fitWidth="177.0" layoutX="26.0" layoutY="7.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTablero/Evento.png" />
+                           </image>
+                        </ImageView>
                      </children>
                   </AnchorPane>
                </children>
@@ -165,22 +213,200 @@
                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
-                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Start">
+                  <Group GridPane.columnIndex="1" />
+                  <ImageView fitHeight="48.0" fitWidth="256.0" GridPane.columnIndex="4" GridPane.rowIndex="9">
+                     <image>
+                        <Image url="@../../../../ImagenesTablero/Finish.png" />
+                     </image>
+                  </ImageView>
+                  <ImageView fitHeight="50.0" fitWidth="255.0">
+                     <image>
+                        <Image url="@../../../../ImagenesTablero/Start.png" />
+                     </image>
+                  </ImageView>
+                  <Text strokeType="OUTSIDE" strokeWidth="0.0" GridPane.columnIndex="4" GridPane.halignment="RIGHT" GridPane.rowIndex="9">
                      <font>
                         <Font size="30.0" />
                      </font>
                   </Text>
-                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Finish" GridPane.columnIndex="4" GridPane.halignment="RIGHT" GridPane.rowIndex="9">
-                     <font>
-                        <Font size="30.0" />
-                     </font>
-                  </Text>
+                  <AnchorPane GridPane.columnIndex="1">
+                     <children>
+                        <AnchorPane layoutX="198.0" />
+                        <ImageView fitHeight="51.0" fitWidth="51.0" layoutX="205.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/2.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="2">
+                     <children>
+                        <ImageView fitHeight="47.0" fitWidth="53.0" layoutX="203.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/3.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="3">
+                     <children>
+                        <ImageView fitHeight="50.0" fitWidth="54.0" layoutX="205.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/4.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="4">
+                     <children>
+                        <ImageView fitHeight="47.0" fitWidth="49.0" layoutX="207.0" layoutY="3.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/5.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.rowIndex="2">
+                     <children>
+                        <ImageView fitHeight="47.0" fitWidth="49.0" layoutX="207.0" layoutY="1.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/11.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="1" GridPane.rowIndex="2">
+                     <children>
+                        <ImageView fitHeight="46.0" fitWidth="51.0" layoutX="205.0" layoutY="1.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/12.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="2" GridPane.rowIndex="2">
+                     <children>
+                        <ImageView fitHeight="46.0" fitWidth="52.0" layoutX="206.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/13.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="3" GridPane.rowIndex="2">
+                     <children>
+                        <ImageView fitHeight="49.0" fitWidth="52.0" layoutX="205.0" layoutY="2.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/14.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="4" GridPane.rowIndex="2">
+                     <children>
+                        <ImageView fitHeight="47.0" fitWidth="51.0" layoutX="207.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/15.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.rowIndex="3">
+                     <children>
+                        <ImageView fitHeight="49.0" fitWidth="53.0" layoutX="203.0" layoutY="3.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/16.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="1" GridPane.rowIndex="3">
+                     <children>
+                        <ImageView fitHeight="46.0" fitWidth="52.0" layoutX="204.0" layoutY="4.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/17.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="2" GridPane.rowIndex="3">
+                     <children>
+                        <ImageView fitHeight="48.0" fitWidth="55.0" layoutX="203.0" layoutY="-1.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/18.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="3" GridPane.rowIndex="3">
+                     <children>
+                        <ImageView fitHeight="49.0" fitWidth="56.0" layoutX="203.0" layoutY="3.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/19.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.rowIndex="4">
+                     <children>
+                        <ImageView fitHeight="51.0" fitWidth="58.0" layoutX="198.0" layoutY="1.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/21.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.rowIndex="1">
+                     <children>
+                        <ImageView fitHeight="49.0" fitWidth="51.0" layoutX="205.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/6.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="1" GridPane.rowIndex="1">
+                     <children>
+                        <ImageView fitHeight="48.0" fitWidth="53.0" layoutX="203.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/7.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="2" GridPane.rowIndex="1">
+                     <children>
+                        <ImageView fitHeight="47.0" fitWidth="51.0" layoutX="205.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/8.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="3" GridPane.rowIndex="1">
+                     <children>
+                        <ImageView fitHeight="49.0" fitWidth="52.0" layoutX="207.0" layoutY="-3.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/9.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="4" GridPane.rowIndex="1">
+                     <children>
+                        <ImageView fitHeight="46.0" fitWidth="51.0" layoutX="205.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/10.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
                   <Circle fx:id="P1" fill="BLUE" radius="15.0" stroke="BLACK" strokeType="INSIDE">
                      <GridPane.margin>
                         <Insets />
@@ -197,9 +423,271 @@
                      <GridPane.margin>
                         <Insets left="120.0" />
                      </GridPane.margin></Circle>
+                  <AnchorPane GridPane.columnIndex="4" GridPane.rowIndex="3">
+                     <children>
+                        <ImageView fitHeight="49.0" fitWidth="49.0" layoutX="207.0" layoutY="3.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/20.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="1" GridPane.rowIndex="4">
+                     <children>
+                        <ImageView fitHeight="50.0" fitWidth="56.0" layoutX="200.0" layoutY="3.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/22.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="2" GridPane.rowIndex="4">
+                     <children>
+                        <ImageView fitHeight="48.0" fitWidth="57.0" layoutX="199.0" layoutY="1.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/23.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="3" GridPane.rowIndex="4">
+                     <children>
+                        <ImageView fitHeight="48.0" fitWidth="55.0" layoutX="201.0" layoutY="1.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/24.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="4" GridPane.rowIndex="4">
+                     <children>
+                        <ImageView fitHeight="52.0" fitWidth="55.0" layoutX="201.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/25.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.rowIndex="5">
+                     <children>
+                        <ImageView fitHeight="51.0" fitWidth="54.0" layoutX="202.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/26.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="1" GridPane.rowIndex="5">
+                     <children>
+                        <ImageView fitHeight="50.0" fitWidth="54.0" layoutX="202.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/27.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="2" GridPane.rowIndex="5">
+                     <children>
+                        <ImageView fitHeight="51.0" fitWidth="55.0" layoutX="201.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/28.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="3" GridPane.rowIndex="5">
+                     <children>
+                        <ImageView fitHeight="52.0" fitWidth="55.0" layoutX="201.0" layoutY="1.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/29.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="4" GridPane.rowIndex="5">
+                     <children>
+                        <ImageView fitHeight="51.0" fitWidth="55.0" layoutX="201.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/30.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.rowIndex="6">
+                     <children>
+                        <ImageView fitHeight="51.0" fitWidth="57.0" layoutX="200.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/31.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="1" GridPane.rowIndex="6">
+                     <children>
+                        <ImageView fitHeight="49.0" fitWidth="52.0" layoutX="204.0" layoutY="1.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/32.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="2" GridPane.rowIndex="6">
+                     <children>
+                        <ImageView fitHeight="53.0" fitWidth="59.0" layoutX="197.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/33.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="3" GridPane.rowIndex="6">
+                     <children>
+                        <ImageView fitHeight="52.0" fitWidth="56.0" layoutX="200.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/34.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="4" GridPane.rowIndex="6">
+                     <children>
+                        <ImageView fitHeight="50.0" fitWidth="54.0" layoutX="202.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/35.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.rowIndex="7">
+                     <children>
+                        <ImageView fitHeight="53.0" fitWidth="53.0" layoutX="203.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/36.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="1" GridPane.rowIndex="7">
+                     <children>
+                        <ImageView fitHeight="53.0" fitWidth="54.0" layoutX="202.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/37.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="2" GridPane.rowIndex="7">
+                     <children>
+                        <ImageView fitHeight="52.0" fitWidth="53.0" layoutX="202.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/38.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="3" GridPane.rowIndex="7">
+                     <children>
+                        <ImageView fitHeight="50.0" fitWidth="53.0" layoutX="203.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/39.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="4" GridPane.rowIndex="7">
+                     <children>
+                        <ImageView fitHeight="53.0" fitWidth="54.0" layoutX="202.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/40.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.rowIndex="8">
+                     <children>
+                        <ImageView fitHeight="51.0" fitWidth="54.0" layoutX="202.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/41.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="1" GridPane.rowIndex="8">
+                     <children>
+                        <ImageView fitHeight="54.0" fitWidth="59.0" layoutX="197.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/42.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="2" GridPane.rowIndex="8">
+                     <children>
+                        <ImageView fitHeight="52.0" fitWidth="52.0" layoutX="204.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/43.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="3" GridPane.rowIndex="8">
+                     <children>
+                        <ImageView fitHeight="53.0" fitWidth="54.0" layoutX="202.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/44.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="4" GridPane.rowIndex="8">
+                     <children>
+                        <ImageView fitHeight="53.0" fitWidth="57.0" layoutX="199.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/45.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.rowIndex="9">
+                     <children>
+                        <ImageView fitHeight="51.0" fitWidth="53.0" layoutX="203.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/46.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="1" GridPane.rowIndex="9">
+                     <children>
+                        <ImageView fitHeight="52.0" fitWidth="54.0" layoutX="202.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/47.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="2" GridPane.rowIndex="9">
+                     <children>
+                        <ImageView fitHeight="55.0" fitWidth="55.0" layoutX="201.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/48.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane GridPane.columnIndex="3" GridPane.rowIndex="9">
+                     <children>
+                        <ImageView fitHeight="53.0" fitWidth="53.0" layoutX="203.0">
+                           <image>
+                              <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/49.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
                </children>
             </GridPane>
          </center>
       </BorderPane>
+      <BorderPane />
   </children>
 </VBox>
