@@ -213,6 +213,26 @@ public class PantallaJuegoController {
     	
     	//alerta
     	mostrarPopup("turno del pingüino: " + pingu.getNombre());
+    	if (pingu.getDadoLento() <= 0) {
+    		lento.setDisable(true);
+    	} else {
+    		lento.setDisable(false);
+    	}
+    	if (pingu.getDadoRapido() <= 0) {
+    		rapido.setDisable(true);
+    	} else {
+    		rapido.setDisable(false);
+    	}
+    	if(pingu.getPescado() <= 0) {
+    		peces.setDisable(true);
+    	} else {
+    		peces.setDisable(false);
+    	}
+    	if(pingu.getBolasNieve() <= 0) {
+    		nieve.setDisable(true);
+    	} else {
+    		nieve.setDisable(false);
+    	}
     }
     
     //método para actualizar el inventario
@@ -374,6 +394,10 @@ public class PantallaJuegoController {
     		eventos.setText("Casilla normal, todo tranquilo");
     		break;
     	case Quebradizo:
+    		int numBolas = pingu.getBolasNieve();
+    		int numDadoL = pingu.getDadoLento();
+    		int numDadoR = pingu.getDadoRapido();
+    		int numPeces = pingu.getPescado();
     		
     		break;
     	case Moto:
