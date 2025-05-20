@@ -237,6 +237,34 @@ public class PantallaJuegoController {
     private void siguienteTurno() {
     	//mover turno
     	turno = (turno + 1) % pingus.size();
+    	
+    	//verificar si el siguiente pingu pierde el turno
+    	if (turno == 0 && saltarTurnoP1 >= 1) {
+    		saltarTurnoP1--;
+    		Pinguino pingu = pingus.get(turno);
+    		mostrarPopup("El pinguino: " + pingu.getNombre() + " tiene el turno cancelado por culpa de un suelo quebradizo");
+    		turno = (turno + 1) % pingus.size();
+    	}
+    	if (turno == 1 && saltarTurnoP2 >= 1) {
+    		saltarTurnoP2--;
+    		Pinguino pingu = pingus.get(turno);
+    		mostrarPopup("El pinguino: " + pingu.getNombre() + " tiene el turno cancelado por culpa de un suelo quebradizo");
+    		turno = (turno + 1) % pingus.size();
+    	}
+    	if (turno == 2 && saltarTurnoP3 >= 1) {
+    		saltarTurnoP3--;
+    		Pinguino pingu = pingus.get(turno);
+    		mostrarPopup("El pinguino: " + pingu.getNombre() + " tiene el turno cancelado por culpa de un suelo quebradizo");
+    		turno = (turno + 1) % pingus.size();
+    	}
+    	if (turno == 3 && saltarTurnoP4 >= 1) {
+    		saltarTurnoP4--;
+    		Pinguino pingu = pingus.get(turno);
+    		mostrarPopup("El pinguino: " + pingu.getNombre() + " tiene el turno cancelado por culpa de un suelo quebradizo");
+    		turno = (turno + 1) % pingus.size();
+    	}
+    	
+    	//lógica
     	Pinguino pingu = pingus.get(turno);
     	actualizarInventario();
     	
