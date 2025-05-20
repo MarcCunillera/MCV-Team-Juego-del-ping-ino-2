@@ -668,10 +668,10 @@ public class PantallaJuegoController {
                     pingus.clear(); // Limpia la lista actual antes de restaurar
 
                     if (rs.next()) {
-                        new Pinguino(1, "Azul", rs.getInt("Jugador_pos_1"), rs.getInt("dado_lento_1"), rs.getInt("dado_rapido_1"), rs.getInt("peces_1"), rs.getInt("bolas_nieve_1"));
-                        new Pinguino(2, "Rojo", rs.getInt("Jugador_pos_2"), rs.getInt("dado_lento_2"), rs.getInt("dado_rapido_2"), rs.getInt("peces_2"), rs.getInt("bolas_nieve_2"));
-                        new Pinguino(3, "Verde", rs.getInt("Jugador_pos_3"), rs.getInt("dado_lento_3"), rs.getInt("dado_rapido_3"), rs.getInt("peces_3"), rs.getInt("bolas_nieve_3"));
-                        new Pinguino(4, "Amarillo", rs.getInt("Jugador_pos_4"), rs.getInt("dado_lento_4"), rs.getInt("dado_rapido_4"), rs.getInt("peces_4"), rs.getInt("bolas_nieve_4"));
+                        pingus.add(new Pinguino(1, "Azul", rs.getInt("Jugador_pos_1"), rs.getInt("dado_lento_1"), rs.getInt("dado_rapido_1"), rs.getInt("peces_1"), rs.getInt("bolas_nieve_1")));
+                        pingus.add(new Pinguino(2, "Rojo", rs.getInt("Jugador_pos_2"), rs.getInt("dado_lento_2"), rs.getInt("dado_rapido_2"), rs.getInt("peces_2"), rs.getInt("bolas_nieve_2")));
+                        pingus.add(new Pinguino(3, "Verde", rs.getInt("Jugador_pos_3"), rs.getInt("dado_lento_3"), rs.getInt("dado_rapido_3"), rs.getInt("peces_3"), rs.getInt("bolas_nieve_3")));
+                        pingus.add(new Pinguino(4, "Amarillo", rs.getInt("Jugador_pos_4"), rs.getInt("dado_lento_4"), rs.getInt("dado_rapido_4"), rs.getInt("peces_4"), rs.getInt("bolas_nieve_4")));
                     }
                 }
             }
