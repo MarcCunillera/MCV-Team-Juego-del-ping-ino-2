@@ -409,7 +409,7 @@ public class PantallaJuegoController {
     		if(siguienteTrineo > posicion) {
     			pingu.setPosicion(siguienteTrineo);
     			finalUpdatePosition();
-    			eventos.setText("Avanzas al siguiente Treino");
+    			eventos.setText("Avanzas al siguiente Trineo");
     		} else {
     			eventos.setText("Te encuentras en el último trineo");
     		}
