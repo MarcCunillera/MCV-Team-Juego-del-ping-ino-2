@@ -34,6 +34,7 @@
 
 <?import javafx.scene.Group?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
@@ -47,7 +48,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox prefHeight="400.0" prefWidth="300.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Vista.PantallaPrincipalController">
+<VBox prefHeight="495.0" prefWidth="343.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Vista.PantallaPrincipalController">
   <children>
     <MenuBar VBox.vgrow="NEVER">
       <menus>
@@ -77,15 +78,15 @@
                         <HBox alignment="CENTER" spacing="50.0" />
                         <PasswordField fx:id="passField" layoutX="72.0" layoutY="160.0" maxWidth="200.0" prefWidth="200.0" promptText="Contraseña..." />
                         <TextField fx:id="userField" layoutX="72.0" layoutY="126.0" maxWidth="200.0" prefWidth="200.0" promptText="Usuario..." />
-                        <Button fx:id="loginButton" layoutX="93.0" layoutY="411.0" mnemonicParsing="false" onAction="#handleLogin" text="Login" textFill="RED">
+                        <Button fx:id="loginButton" layoutX="97.0" layoutY="407.0" mnemonicParsing="false" onAction="#handleLogin" text="Login" textFill="RED">
                            <font>
                               <Font size="17.0" />
                            </font></Button>
-                        <Button fx:id="registerButton" layoutX="178.0" layoutY="411.0" mnemonicParsing="false" onAction="#handleRegister" text="Registro" textFill="RED">
+                        <Button fx:id="registerButton" layoutX="187.0" layoutY="407.0" mnemonicParsing="false" onAction="#handleRegister" text="Registro" textFill="RED">
                            <font>
                               <Font size="17.0" />
                            </font></Button>
-                        <ImageView fitHeight="88.0" fitWidth="86.0" layoutX="220.0" layoutY="193.0">
+                        <ImageView fitHeight="93.0" fitWidth="82.0" layoutX="233.0" layoutY="190.0">
                            <image>
                               <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/pingu%20amarillo.png" />
                            </image>
@@ -109,7 +110,7 @@
                            <image>
                               <Image url="@../../../../ImagenesTableto%20sin%20Fondo%20-----------------/pingu%20verde.png" />
                            </image>
-                        </ImageView>
+                        </ImageView>		
                      </children>
                   </Group>
                </children>
@@ -117,5 +118,6 @@
          </children>
       </StackPane>
       <Group />
+      <ListView prefHeight="0.0" prefWidth="343.0" />
   </children>
 </VBox>
